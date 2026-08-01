@@ -69,8 +69,11 @@ export function getEmissiveColor(colorIndex) {
  */
 export function createGemMaterial(colorIndex) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
+  // Satura a cor base um pouco (multiply) — gems mais ricas/vivas, como Bejeweled.
+  const base = new THREE.Color(def[1]);
+  base.offsetHSL(0, 0.08, 0); // +8% saturação
   return new THREE.MeshPhysicalMaterial({
-    color: new THREE.Color(def[1]),
+    color: base,
     emissive: new THREE.Color(def[2]),
     emissiveIntensity: 0.35, // glow interno presente mas não dominante
     roughness: 0.12,

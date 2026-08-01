@@ -162,7 +162,7 @@ export function create(colorIndex, position) {
       rotation: Math.PI / 4, // vira em "X" para dar o formato 4-pontas
     })
   );
-  sparkle.scale.setScalar(0.7);
+  sparkle.scale.setScalar(0.85);
   sparkle.position.set(0.28, 0.28, 0.1);
   sparkle.userData.phase = Math.random() * Math.PI * 2; // dessincroniza os sparkles
 
@@ -335,8 +335,10 @@ function tick(dt, time) {
   // sparkle — brilho periódico (2 ciclos/s, dessincronizado por fase)
   if (!u.reduced) {
     const sp = 0.5 + 0.5 * Math.sin(time * 4.2 + u.sparkle.userData.phase);
-    u.sparkle.material.opacity = 0.75 * sp * sp; // pico curto e agudo
-    u.sparkle.scale.setScalar(0.55 + 0.35 * sp);
+    // pico agudo e BRILHANTE (sp^4 acentua o pico, quase 0 entre eles)
+    const peak = sp * sp * sp * sp;
+    u.sparkle.material.opacity = 0.95 * peak;
+    u.sparkle.scale.setScalar(0.5 + 0.5 * peak);
     u.sparkle.material.rotation += dt * 0.6; // leve rotação contínua (material.rotation)
   } else {
     u.sparkle.material.opacity = 0;

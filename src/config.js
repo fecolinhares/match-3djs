@@ -46,9 +46,10 @@ export const RENDER = {
   FOV: 42,
   CAMERA_POS: [0, 0, 16],
   CAMERA_LOOKAT: [0, -1.5, 0],
-  BLOOM_STRENGTH: 0.85,
-  BLOOM_RADIUS: 0.6,
-  BLOOM_THRESHOLD: 0.82,
+  BLOOM_STRENGTH: 0.55,
+  BLOOM_RADIUS: 0.5,
+  BLOOM_THRESHOLD: 0.92, // alto: só sparkles + emissive intenso brilham,
+                         // não o corpo da gem (evita look de "orbe de luz")
   AMBIENT_INTENSITY: 0.35,
   KEY_LIGHT_INTENSITY: 2.2,
   FILL_LIGHT_INTENSITY: 0.6,
