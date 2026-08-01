@@ -29,7 +29,7 @@ export const GEM_DEFS = [
   ['Emerald',      '#30D158', '#7BE9A0', '#D2F7DF'],
   ['Aquamarine',   '#0BD1E8', '#6FE7F5', '#D6FBFF'],
   ['Amethyst',     '#AF52DE', '#D9A0F5', '#F2DFFB'],
-  ['Frost Diamond','#F2F4F8', '#E8EDF5', '#FFFFFF'],
+  ['Frost Diamond','#D6DAE4', '#9AA4B8', '#FFFFFF'],
   ['Wild Star',    '#FFD60A', '#FFF3B0', '#FFF8D6'],  // índice 6 — especial
 ];
 

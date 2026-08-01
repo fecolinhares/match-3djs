@@ -141,7 +141,7 @@ export function create(colorIndex, position) {
       blending: THREE.AdditiveBlending,
     })
   );
-  glow.scale.setScalar(1.7);
+  glow.scale.setScalar(1.5);
   glow.position.z = -0.05;
 
   // Selection ring (hidden until selected).

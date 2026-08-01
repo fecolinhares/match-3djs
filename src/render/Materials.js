@@ -75,7 +75,7 @@ export function createGemMaterial(colorIndex) {
   return new THREE.MeshPhysicalMaterial({
     color: base,
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.35, // glow interno presente mas não dominante
+    emissiveIntensity: 0.28, // glow interno presente mas discreto (não lava com bloom)
     roughness: 0.12,
     metalness: 0.0,
     transmission: 0.35, // moderado — refração quando GPU suporta; sem depender dela
