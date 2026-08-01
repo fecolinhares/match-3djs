@@ -105,7 +105,24 @@ export function create(colorIndex, position) {
   ring.position.z = 0.02;
   ring.visible = false;
 
-  group.add(body, core, glow, ring);
+  // Sparkle — brilho 4-pontas que pisca periodicamente (look Bejeweled).
+  // Pequeno sprite additive no canto superior da gem; o tick anima opacity.
+  const sparkle = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: makeGlowTexture(),
+      color: new THREE.Color(0xffffff),
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      rotation: Math.PI / 4, // vira em "X" para dar o formato 4-pontas
+    })
+  );
+  sparkle.scale.setScalar(0.7);
+  sparkle.position.set(0.28, 0.28, 0.1);
+  sparkle.userData.phase = Math.random() * Math.PI * 2; // dessincroniza os sparkles
+
+  group.add(body, core, glow, ring, sparkle);
 
   const start = {
     x: position.x,
@@ -125,6 +142,7 @@ export function create(colorIndex, position) {
     core,
     glow,
     ring,
+    sparkle,
     // tween: current motion
     tween: { t: 0, from: { ...start }, to: { ...position }, dur: SPAWN_DUR, ease: easeOutElastic },
     base: { x: position.x, y: position.y, z: position.z },
@@ -268,6 +286,16 @@ function tick(dt, time) {
     const rs = 1 + 0.12 * rp;
     u.ring.scale.setScalar(rs);
     u.ring.rotation.z = time * 0.8;
+  }
+
+  // sparkle — brilho periódico (2 ciclos/s, dessincronizado por fase)
+  if (!u.reduced) {
+    const sp = 0.5 + 0.5 * Math.sin(time * 4.2 + u.sparkle.userData.phase);
+    u.sparkle.material.opacity = 0.75 * sp * sp; // pico curto e agudo
+    u.sparkle.scale.setScalar(0.55 + 0.35 * sp);
+    u.sparkle.rotation += dt * 0.6; // leve rotação contínua
+  } else {
+    u.sparkle.material.opacity = 0;
   }
 
   // --- materials (flash) ------------------------------------------------

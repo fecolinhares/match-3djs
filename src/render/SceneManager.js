@@ -9,6 +9,7 @@
 // ============================================================
 
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { RENDER } from '../config.js';
 
 const BG_DEEP = 0x0a0a12;
@@ -48,11 +49,13 @@ export function init(container) {
 
   // --- Lighting -----------------------------------------------------
   // Warm key, top-left, slightly amber for cinema warmth.
-  const key = new THREE.DirectionalLight(0xffe3b8, RENDER.KEY_LIGHT_INTENSITY);
-  key.position.set(-6, 9, 7);
+  // Alta intensidade + direção dura = facetas com sombras dramáticas
+  // (cada face do octaedro pega luz diferente → vende volume da pedra).
+  const key = new THREE.DirectionalLight(0xffe3b8, 3.0);
+  key.position.set(-6, 10, 7);
 
-  // Cool blue hemisphere fill — lifts shadowed faces.
-  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, RENDER.FILL_LIGHT_INTENSITY);
+  // Cool blue hemisphere fill — LEVE, para não lavar o contraste das facetas.
+  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, 0.35);
 
   // Violet rim point behind the board — separates gems from the bg.
   const rim = new THREE.PointLight(0x7b2fff, RENDER.RIM_LIGHT_INTENSITY, 45, 2.0);
@@ -62,6 +65,18 @@ export function init(container) {
   const ambient = new THREE.AmbientLight(0x00d2ff, RENDER.AMBIENT_INTENSITY);
 
   scene.add(key, fill, rim, ambient);
+
+  // Environment map — CRÍTICO para o MeshPhysicalMaterial das gems.
+  // Sem envMap, transmission/iridescence/clearcoat/specular não têm o que
+  // refletir e as gems parecem polígonos sólidos planos. RoomEnvironment
+  // dá reflexos suaves de estúdio que fazem as gems parecerem pedra real.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  const envScene = new RoomEnvironment();
+  const envRT = pmrem.fromScene(envScene, 0.04);
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 0.9; // sutil — gems brilham, não estouram
+  // Aplicado globalmente; cada material usa envMapIntensity próprio.
 
   // Resize handling (kept internal; PostFX resizes separately via its own setSize).
   const onResize = () => {
