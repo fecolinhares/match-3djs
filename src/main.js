@@ -98,6 +98,9 @@ function startGame() {
   menu.hide();
   hud.show();
 
+  // Inicializa o board (cria grid + primeira coluna) — OBRIGATÓRIO
+  game.start();
+
   // Sincroniza o tabuleiro inicial
   boardMesh.sync(game.snapshot());
   updateHUD();
@@ -212,10 +215,12 @@ function update(dt) {
   // Reconcile board com game snapshot — mas NÃO durante explosão de match
   if (!matchResolving) {
     const snap = game.snapshot();
-    if (!snap.falling) {
-      boardMesh.clearFalling(); // coluna pousou → esconde grupo
+    if (snap) {
+      if (!snap.falling) {
+        boardMesh.clearFalling(); // coluna pousou → esconde grupo
+      }
+      boardMesh.sync(snap);
     }
-    boardMesh.sync(snap);
   }
 
   // HUD updates
