@@ -33,7 +33,6 @@ app.style.background = '#0A0A12';
 // ------------------------------------------------------------
 const { scene, camera, renderer } = SceneManager.init(app);
 const postFX = createPostFX(renderer, scene, camera);
-Materials.init?.(renderer); // se existir, prepara texturas compartilhadas
 
 const boardMesh = new BoardMesh(scene);
 Particles.init?.(scene);

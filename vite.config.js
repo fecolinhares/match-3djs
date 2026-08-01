@@ -9,5 +9,8 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
+    // build output dir override
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 });
