@@ -52,6 +52,8 @@ let game = null;
 let lastTime = performance.now();
 let best = Number(localStorage.getItem('match3d-best') || 0);
 let pausedFlash = false;
+let matchResolving = false; // true durante flash+explosão de match
+let flashCount = 0;         // flashes de cascata em andamento
 let shake = { t: 0, dur: 0, amp: 0 };
 
 // ------------------------------------------------------------
@@ -105,15 +107,22 @@ function startGame() {
 function handleGameEvent(ev) {
   switch (ev.type) {
     case 'match':
-      // Dispara o flash + explosão nas células do match
-      boardMesh.flashMatch(ev.cells, () => {});
-      // Re-sync depois que o board aplica gravidade — feito no update loop
-      break;
-    case 'clear':
-      boardMesh.clearGem(ev.x, ev.y);
-      break;
-    case 'gravity':
-      boardMesh.sync(game.snapshot());
+      // Dispara o flash + explosão nas células do match.
+      // NÃO chamamos sync() enquanto o flash roda — o sync reconciliaria
+      // o grid já limpo pelo engine e mataria a explosão.
+      // Em cascatas, múltiplos matches disparam em paralelo: contamos e
+      // só sincronizamos quando o ÚLTIMO flash terminar.
+      flashCount += 1;
+      matchResolving = true;
+      boardMesh.flashMatch(ev.cells, () => {
+        flashCount -= 1;
+        if (flashCount <= 0) {
+          flashCount = 0;
+          matchResolving = false;
+          // Pós-explosão: sincroniza (gravidade já aplicada no engine)
+          boardMesh.sync(game.snapshot());
+        }
+      });
       break;
     default:
       break;
@@ -192,8 +201,22 @@ function update(dt) {
 
   const events = game.update(dt);
 
-  // Reconcile board with game snapshot (falls, new columns, clears)
-  boardMesh.sync(game.snapshot());
+  // Dirige eventos (match → flash; enquanto resolve, não sync)
+  for (const ev of events) {
+    if (ev.type === 'match') {
+      matchResolving = true;
+    }
+    handleGameEvent(ev);
+  }
+
+  // Reconcile board com game snapshot — mas NÃO durante explosão de match
+  if (!matchResolving) {
+    const snap = game.snapshot();
+    if (!snap.falling) {
+      boardMesh.clearFalling(); // coluna pousou → esconde grupo
+    }
+    boardMesh.sync(snap);
+  }
 
   // HUD updates
   const snap = game.snapshot();
