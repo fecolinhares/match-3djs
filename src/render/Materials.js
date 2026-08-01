@@ -72,7 +72,7 @@ export function createGemMaterial(colorIndex) {
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(def[1]),
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.45, // glow interno mais presente — vende o look de pedra
+    emissiveIntensity: 0.35, // glow interno presente mas não dominante
     roughness: 0.12,
     metalness: 0.0,
     transmission: 0.35, // moderado — refração quando GPU suporta; sem depender dela
@@ -85,6 +85,7 @@ export function createGemMaterial(colorIndex) {
     specularIntensity: 2.2,
     specularColor: new THREE.Color(def[3]),
     envMapIntensity: 1.5, // reflexos mais evidentes do RoomEnvironment
+    vertexColors: true,   // usa tintFacets (contraste de faceta garantido)
     flatShading: true,
   });
 }

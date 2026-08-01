@@ -67,6 +67,43 @@ const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
 
 // ------------------------------------------------------------
+// Vertex-color facet tinting — each face gets a brightness factor
+// from its normal orientation (up faces lighter, down faces darker).
+// Gives guaranteed cut-stone contrast independent of envMap/GPU.
+// ------------------------------------------------------------
+function tintFacets(geometry) {
+  const pos = geometry.attributes.position;
+  const count = pos.count;
+  const colors = new Float32Array(count * 3);
+  // OctahedronGeometry detail 1: faces are triangles; compute per-face
+  // normal by averaging the 3 vertices of each triangle.
+  for (let i = 0; i < count; i += 3) {
+    const ax = pos.getX(i), ay = pos.getY(i), az = pos.getZ(i);
+    const bx = pos.getX(i + 1), by = pos.getY(i + 1), bz = pos.getZ(i + 1);
+    const cx = pos.getX(i + 2), cy = pos.getY(i + 2), cz = pos.getZ(i + 2);
+    // normal = (B-A) × (C-A)
+    const ux = bx - ax, uy = by - ay, uz = bz - az;
+    const vx = cx - ax, vy = cy - ay, vz = cz - az;
+    let nx = uy * vz - uz * vy;
+    let ny = uz * vx - ux * vz;
+    let nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    nx /= len; ny /= len; nz /= len;
+    // Brightness: top faces (normal.y > 0) catch key light → lighter.
+    // Diagonal faces get mid tone; bottom faces darker.
+    const up = Math.max(0, ny);
+    const side = Math.max(0, -ny) * 0.35 + Math.abs(nx) * 0.18 + Math.abs(nz) * 0.12;
+    const b = 0.78 + up * 0.38 + side * 0.25; // ~0.78..1.16
+    for (let k = 0; k < 3; k++) {
+      colors[(i + k) * 3] = b;
+      colors[(i + k) * 3 + 1] = b;
+      colors[(i + k) * 3 + 2] = b;
+    }
+  }
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+// ------------------------------------------------------------
 // create(colorIndex, position) → THREE.Group
 // ------------------------------------------------------------
 export function create(colorIndex, position) {
@@ -77,7 +114,13 @@ export function create(colorIndex, position) {
   const coreMat = createCoreMaterial(colorIndex);
 
   // Faceted crown — octahedron detail 1 + flat shading = cut stone.
-  const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.46, 1), bodyMat);
+  // Vertex colors por face: cada face recebe um tom ligeiramente diferente
+  // baseado na orientação da normal (faces viradas pra cima = mais claras,
+  // pra baixo = mais escuras). Isso GARANTE contraste de faceta mesmo sem
+  // envMap/transmission — o look de pedra lapidada independe da GPU.
+  const bodyGeo = new THREE.OctahedronGeometry(0.46, 1);
+  tintFacets(bodyGeo);
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
 
   // Inner fire — opaque octahedron rotated 45°, smaller. Rendered into
   // the opaque pass, so the transmissive shell refracts it: real depth.
@@ -86,18 +129,19 @@ export function create(colorIndex, position) {
   core.rotation.x = 0.3;
   core.scale.setScalar(1.05);
 
-  // Glow sprite behind the stone.
+  // Glow sprite behind the stone — SUTIL. Glow demais = "neon", não pedra.
+  // O Bejeweled deixa facetas + reflexos dominarem; glow é apoio, não estrela.
   const glow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: makeGlowTexture(),
       color: new THREE.Color(def[2]),
       transparent: true,
-      opacity: 0.42,
+      opacity: 0.22,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
   );
-  glow.scale.setScalar(2.6);
+  glow.scale.setScalar(1.7);
   glow.position.z = -0.05;
 
   // Selection ring (hidden until selected).
@@ -293,7 +337,7 @@ function tick(dt, time) {
     const sp = 0.5 + 0.5 * Math.sin(time * 4.2 + u.sparkle.userData.phase);
     u.sparkle.material.opacity = 0.75 * sp * sp; // pico curto e agudo
     u.sparkle.scale.setScalar(0.55 + 0.35 * sp);
-    u.sparkle.rotation += dt * 0.6; // leve rotação contínua
+    u.sparkle.material.rotation += dt * 0.6; // leve rotação contínua (material.rotation)
   } else {
     u.sparkle.material.opacity = 0;
   }
