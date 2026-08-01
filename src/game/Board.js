@@ -212,6 +212,15 @@ export class Board {
       this.falling.stepDown(1);
       events.push({ type: 'fall', x: this.falling.x, y: this.falling.y });
     } else {
+      // Não consegue descer. Se a coluna ainda está na zona de spawn
+      // (base y < 0 — nenhuma gem chegou a entrar no grid), é GAME OVER:
+      // o tabuleiro está cheio no topo.
+      if (this.falling.y < 0) {
+        this.over = true;
+        this.falling = null;
+        this._emit('onGameOver', { score: this.score, level: this.level });
+        return;
+      }
       // Pousou — fixa no grid e aguarda match check
       this._lockColumn(events);
       this.landing = true;
@@ -238,7 +247,9 @@ export class Board {
     this.resolving = true;
     this._resolveCascade(events, 1);
     this.resolving = false;
-    this.combo = 0;
+    // NOTA: combo NÃO é zerado aqui — é resetado em spawnColumn()
+    // (chamado logo abaixo). Mantê-lo até lá permite que a UI leia
+    // o combo final da cascata via snapshot/eventos.
 
     // Nova coluna
     this.spawnColumn();
