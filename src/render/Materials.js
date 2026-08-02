@@ -110,25 +110,25 @@ export function makeFrameTexture() {
     ctx.closePath();
   };
 
-  // outer cyan glow (shadowBlur = glow)
+  // outer violet glow (shadowBlur = glow) — ANTI-SLOP: era cyan dominante
   ctx.save();
-  ctx.shadowColor = 'rgba(0,210,255,0.95)';
+  ctx.shadowColor = 'rgba(124,72,255,0.55)';
   ctx.shadowBlur = 30;
-  ctx.strokeStyle = 'rgba(0,210,255,0.9)';
+  ctx.strokeStyle = 'rgba(124,72,255,0.75)';
   ctx.lineWidth = 6;
   roundRect(inset, inset, w, h, r);
   ctx.stroke();
   ctx.restore();
 
-  // inner violet hairline accent
-  ctx.strokeStyle = 'rgba(123,47,255,0.5)';
+  // inner cyan hairline accent — agora o cyan é o detalhe, não o herói
+  ctx.strokeStyle = 'rgba(0,210,255,0.30)';
   ctx.lineWidth = 2;
   roundRect(inset + 9, inset + 9, w - 18, h - 18, Math.max(0, r - 9));
   ctx.stroke();
 
-  // corner accent dots (cyan)
+  // corner accent dots (violeta)
   const dot = (x, y) => {
-    ctx.fillStyle = 'rgba(0,210,255,0.9)';
+    ctx.fillStyle = 'rgba(140,124,255,0.8)';
     ctx.beginPath();
     ctx.arc(x, y, 7, 0, Math.PI * 2);
     ctx.fill();

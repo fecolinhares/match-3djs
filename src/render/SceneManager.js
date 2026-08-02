@@ -55,7 +55,8 @@ export function init(container) {
   key.position.set(-6, 10, 7);
 
   // Cool blue hemisphere fill — LEVE, para não lavar o contraste das facetas.
-  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, 0.45);
+  // Reduzido (0.45→0.30): junto com o spot 90 antigo, o azul dominava a cena.
+  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, 0.30);
 
   // Violet rim point behind the board — separates gems from the bg.
   const rim = new THREE.PointLight(0x7b2fff, RENDER.RIM_LIGHT_INTENSITY, 45, 2.0);
@@ -66,7 +67,10 @@ export function init(container) {
 
   // Soft spotlight frontal — foca o tabuleiro (centro do board brilha,
   // bordas caem), look "holofote de palco" dos match-3 modernos.
-  const spot = new THREE.SpotLight(0xcfe8ff, 90, 40, 0.55, 0.65, 1.2);
+  // ANTI-SLOP: intensidade 90 + cor azul (0xcfe8ff) lavava a cena inteira
+  // em cyan — dominava a borda violeta e estourava o centro. Agora:
+  // intensidade contida + tom neutro quente.
+  const spot = new THREE.SpotLight(0xfff2e0, 42, 40, 0.55, 0.65, 1.2);
   spot.position.set(0, 9, 10);
   spot.target.position.set(0, RENDER.CAMERA_LOOKAT[1], 0);
   scene.add(spot, spot.target);

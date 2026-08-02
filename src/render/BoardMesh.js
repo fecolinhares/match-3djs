@@ -282,7 +282,7 @@ export class BoardMesh {
       new THREE.PlaneGeometry(GAP * 0.7, GAP * 5.2),
       new THREE.MeshBasicMaterial({
         map: makeBeamTexture(),
-        color: 0x00d2ff,
+        color: 0x8a7cff, // violeta suave, consistente com o beam
         transparent: true,
         opacity: 0,
         depthWrite: false,
