@@ -2,9 +2,12 @@
 
 > Um puzzle match-3 inspirado no clássico **COLUMNS** da Sega, elevado ao padrão
 > visual dos jogos atuais — gráficos **AAA** com Three.js, jogável com **mouse ou
-> teclado**.
+> teclado** (e touch no mobile).
 
-![Gameplay](docs/screenshot.png)
+<p align="center">
+  <img src="docs/screenshots/gameplay-desktop.png" alt="Gameplay desktop" width="640" />
+  <img src="docs/screenshots/gameplay-mobile.png" alt="Gameplay mobile" width="200" />
+</p>
 
 ## 🎮 Como Jogar
 
@@ -47,6 +50,16 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 npm install   # (veja nota abaixo sobre o symlink do node_modules)
 npm run dev   # → http://localhost:3456
 ```
+
+## 🌐 Deploy (GitHub Pages)
+
+O projeto está pronto para GitHub Pages — o workflow
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) faz
+build + deploy automático no push para `main` (ou manual via Actions tab).
+
+**Para ativar:** torne o repositório público (ou use um plano com Pages
+privado) → **Settings → Pages → Source: GitHub Actions**. O `vite.config.js`
+já usa `base: './'`, então os assets funcionam em qualquer subpath.
 
 ## 📁 Estrutura
 
