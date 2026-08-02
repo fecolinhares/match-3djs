@@ -72,7 +72,7 @@ const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
-const OUTLINE_SCALE = 1.08; // bold ink outline (1.06..1.10 per contract)
+const OUTLINE_SCALE = 1.10; // bold ink outline (vision: falling edges soft)
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor

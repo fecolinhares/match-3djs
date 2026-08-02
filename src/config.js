@@ -64,7 +64,7 @@ export const RENDER = {
   // Board desce na tela (topo livre para o HUD DOM). Usado pelo boardGroup
   // E pelo Y_OFFSET das gems — mover juntos mantém o alinhamento.
   BOARD_Y_OFFSET: -2.0,  // -1.7 HUD ainda colado no board; -2.0 dá respiro
-  BLOOM_STRENGTH: 0.28,
+  BLOOM_STRENGTH: 0.22,  // 0.28→0.22 — outlines das gems ficam mais nítidos
   BLOOM_RADIUS: 0.42,
   BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout
                          // branco nas gems claras (Frost Diamond)
