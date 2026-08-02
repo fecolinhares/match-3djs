@@ -76,6 +76,7 @@ function startGame() {
       },
       onLevelUp: (n) => {
         audio.play('levelup');
+        Particles.levelUpFlash?.();
       },
       onGameOver: (info) => {
         audio.play('gameover');
@@ -109,6 +110,14 @@ function startGame() {
 
 function handleGameEvent(ev) {
   switch (ev.type) {
+    case 'land':
+      // Landing juice: poeira + flash suave no ponto de pouso da coluna.
+      Particles.landingImpact?.({ x: ev.x, y: ev.y }, ev.color);
+      break;
+    case 'fall':
+      // Trail de queda: faíscas minúsculas ao longo da coluna.
+      Particles.fallTrail?.({ x: ev.x, y: ev.y }, ev.color);
+      break;
     case 'match':
       // Dispara o flash + explosão nas células do match.
       // NÃO chamamos sync() enquanto o flash roda — o sync reconciliaria
@@ -117,6 +126,11 @@ function handleGameEvent(ev) {
       // só sincronizamos quando o ÚLTIMO flash terminar.
       flashCount += 1;
       matchResolving = true;
+      // Shockwave central do match (anel duplo + flash + faíscas).
+      if (ev.cells?.[0]?.cells?.[0]) {
+        const first = ev.cells[0].cells[0];
+        Particles.shockwave?.({ x: first.x, y: first.y }, ev.cells[0].color);
+      }
       boardMesh.flashMatch(ev.cells, () => {
         flashCount -= 1;
         if (flashCount <= 0) {
@@ -173,6 +187,9 @@ input.on('hardDrop', () => {
   if (game) {
     const events = game.hardDrop();
     audio.play('land');
+    // Processa eventos do hard drop (land/fall/match) — landing juice,
+    // trail e explosão de match SÓ disparam se passarmos por aqui.
+    for (const ev of events) handleGameEvent(ev);
     // re-sync após hard drop + possível match
     boardMesh.sync(game.snapshot());
   }
@@ -261,6 +278,11 @@ function render(time) {
   postFX.composer.render();
 
   requestAnimationFrame(render);
+}
+
+// Debug helper: expõe o game globalmente para testes (Playwright) e QA.
+if (typeof window !== 'undefined') {
+  window.__game = () => game;
 }
 
 // ------------------------------------------------------------

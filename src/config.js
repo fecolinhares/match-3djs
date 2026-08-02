@@ -10,7 +10,7 @@ export const BOARD = {
   VISIBLE_START: 4,  // primeira row visível (ROWS - VISIBLE_ROWS)
   CELL_SIZE: 1.0,
   GAP: 1.12,         // espaçamento entre células (respiro visual)
-  LAND_DELAY: 0.25,  // segundos antes de checar match após pousar
+  LAND_DELAY: 0.12,  // segundos antes de checar match após pousar (era 0.25 — jogador dropava durante o landing e era ignorado)
 };
 
 export const COLUMN = {

@@ -182,7 +182,11 @@ export class Board {
    */
   update(dt) {
     const events = [];
-    if (this.over || !this.falling) return events;
+    // IMPORTANTE: o guard NÃO pode barrar quando estamos em landing —
+    // após pousar, falling é null (lockColumn) e precisamos resolver o
+    // landing (match check + spawn da próxima coluna). Sem isso o jogo
+    // trava após a primeira peça (bug "a segunda peça não vem").
+    if (this.over) return events;
 
     // Pausa de landing antes de resolver matches
     if (this.landing) {
@@ -193,6 +197,8 @@ export class Board {
       }
       return events;
     }
+
+    if (!this.falling) return events;
 
     // Auto-queda
     const interval = this._fallInterval();
