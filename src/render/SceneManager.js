@@ -1,19 +1,22 @@
 // ============================================================
 // Match-3D.js — SceneManager.js
 // Contract: SceneManager.init(container) → { scene, camera, renderer }
-// Design: dark bg #0A0A12 with a subtle radial gradient dome,
-//   FOV 42 camera at [0,0,16] → [0,-1.5,0], cinematic lighting:
-//   warm directional key (top-left), cool hemisphere fill,
-//   violet rim point behind the board, low cyan ambient.
-//   WebGL2, antialias, pixelRatio capped at 2, ACES tone mapping.
+// Design: CARTOON ARCADE backdrop — warm stone/brick wall
+//   (tan/gold/ochre/brown blocks, dark mortar, deterministic canvas
+//   texture) framing the dark board like an arcade cabinet. The wall
+//   is bright/warm so the dark navy board reads as a recessed window;
+//   a warm vignette keeps the screen edges dark so gems pop.
+//   Camera/lighting untouched: FOV 42 camera at [0,0,16] → [0,-1.5,0],
+//   warm directional key (top-left), cool hemisphere fill, violet rim
+//   point behind the board, low ambient. WebGL2, antialias,
+//   pixelRatio capped at 2, ACES tone mapping.
 // ============================================================
 
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { RENDER } from '../config.js';
 
-const BG_DEEP = 0x0a0a12;
-const BG_CENTER = 0x191a2e; // slight lift at screen center (gradient dome)
+const BG_DEEP = 0x241708; // warm dark fallback (mortar brown) — no blue-black void
 
 /**
  * init(container) → { scene, camera, renderer }
@@ -34,9 +37,9 @@ export function init(container) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(BG_DEEP);
 
-  // Subtle radial gradient backdrop — deep well behind the board.
-  const dome = buildBackdropDome();
-  scene.add(dome);
+  // Warm stone/brick backdrop — full-screen arcade-cabinet wall.
+  const backdrop = buildBrickBackdrop();
+  scene.add(backdrop);
 
   const camera = new THREE.PerspectiveCamera(
     RENDER.FOV,
@@ -113,36 +116,159 @@ export function resize(container, camera, renderer) {
 }
 
 // ------------------------------------------------------------
-// Gradient backdrop dome: big sphere (BackSide) with a radial
-// CanvasTexture, #191A2E center → #0A0A12 edges.
+// Warm stone/brick backdrop (arcade-cabinet wall).
+// Two BackSide spheres centered on the scene, camera inside both:
+//   1. Brick dome  (radius 60)  — deterministic canvas brick wall,
+//      tan/gold/ochre/brown stones, dark mortar, cartoon bevels,
+//      stone grain speckles. Texture repeats x2 so tile seams land
+//      off-screen (longitudes ±x), never in the camera view.
+//   2. Vignette dome (radius 59.5) — warm radial darkening at the
+//      screen edges, framing the dark board like a cabinet window.
 // ------------------------------------------------------------
-function buildBackdropDome() {
-  const size = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const grad = ctx.createRadialGradient(
-    size / 2,
-    size / 2 * 0.42,
-    size * 0.06,
-    size / 2,
-    size / 2,
-    size * 0.72
-  );
-  grad.addColorStop(0.0, '#1E2036'); // leve lift cyan-violeta no centro
-  grad.addColorStop(0.45, '#10101C');
-  grad.addColorStop(1.0, '#0A0A12');
+
+/** Deterministic PRNG (mulberry32) — same seed → same texture every run. */
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function clamp255(v) {
+  return v < 0 ? 0 : v > 255 ? 255 : v;
+}
+
+/** Shift a #RRGGBB color by ±delta lightness → 'rgb(r,g,b)'. */
+function shade(hex, delta) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgb(${clamp255(((n >> 16) & 255) + delta)},${clamp255(((n >> 8) & 255) + delta)},${clamp255((n & 255) + delta)})`;
+}
+
+// Warm stone palette — tan / gold / ochre / brown (Columns reference).
+const STONE_PALETTE = [
+  { base: '#D2A05E', light: '#EDC988', dark: '#A07038' }, // golden tan
+  { base: '#C08B4F', light: '#DFB57C', dark: '#91602B' }, // tan
+  { base: '#B57C3E', light: '#D5A264', dark: '#875323' }, // ochre
+  { base: '#A66B33', light: '#C79255', dark: '#7C4A1F' }, // brown
+  { base: '#C99B5C', light: '#E6C284', dark: '#9A6B34' }, // warm sand
+];
+
+const MORTAR = '#382818'; // dark warm brown — recessed, never flat black
+
+/** One stone: top-lit cartoon shading + hard bevel edges + grain speckles. */
+function drawBrick(ctx, rand, x, y, w, h) {
+  const p = STONE_PALETTE[(rand() * STONE_PALETTE.length) | 0];
+  const jit = (rand() - 0.5) * 16; // per-stone warmth jitter
+
+  // Soft top-lit gradient (lit above, shaded below — "raised stone").
+  const base = shade(p.base, jit);
+  const lit = shade(p.light, jit * 0.7);
+  const dark = shade(p.dark, jit * 0.7);
+  const grad = ctx.createLinearGradient(0, y, 0, y + h);
+  grad.addColorStop(0, lit);
+  grad.addColorStop(0.35, base);
+  grad.addColorStop(1, dark);
   ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(x, y, w, h);
+
+  // Hard cartoon bevel edges.
+  ctx.fillStyle = lit;
+  ctx.fillRect(x, y, w, 3); // top
+  ctx.fillRect(x, y, 3, h); // left
+  ctx.fillStyle = dark;
+  ctx.fillRect(x, y + h - 4, w, 4); // bottom
+  ctx.fillRect(x + w - 3, y, 3, h); // right
+
+  // Stone grain speckles (rough, uneven masonry).
+  const n = 26 + ((rand() * 30) | 0);
+  for (let i = 0; i < n; i++) {
+    const sx = x + 2 + rand() * (w - 4);
+    const sy = y + 3 + rand() * (h - 7);
+    const sr = 0.8 + rand() * 1.9;
+    ctx.fillStyle = rand() < 0.5
+      ? shade(p.base, jit - 14 - rand() * 18)
+      : shade(p.base, jit + 12 + rand() * 16);
+    ctx.beginPath();
+    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function buildBrickBackdrop() {
+  const SIZE = 1024;
+  const BW = 64; // stone width
+  const BH = 32; // stone height
+  const MORTAR_PX = 5;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = SIZE;
+  const ctx = canvas.getContext('2d');
+  const rand = mulberry32(0x5eed1234); // fixed seed — deterministic
+
+  // Mortar bed first, stones drawn inset → recessed dark joints.
+  ctx.fillStyle = MORTAR;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Staggered running bond (offset half-stone every other course).
+  const rows = Math.ceil(SIZE / BH) + 2;
+  const cols = Math.ceil(SIZE / BW) + 2;
+  for (let r = 0; r < rows; r++) {
+    const y = r * BH + MORTAR_PX / 2;
+    const stagger = r % 2 === 0 ? 0 : BW / 2;
+    for (let c = -1; c < cols; c++) {
+      const x = c * BW - stagger + MORTAR_PX / 2;
+      drawBrick(ctx, rand, x, y, BW - MORTAR_PX, BH - MORTAR_PX);
+    }
+  }
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  // x2 wrap: seams land at longitudes ±x (off-screen for the front camera),
+  // and the visible patch keeps a dense ~6×6 stone masonry look.
+  tex.repeat.set(2, 1);
 
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(60, 32, 16),
+  const brickDome = new THREE.Mesh(
+    new THREE.SphereGeometry(60, 48, 24),
     new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false })
   );
-  dome.position.set(0, -8, 0);
-  dome.renderOrder = -10;
-  return dome;
+  brickDome.position.set(0, -8, 0);
+  brickDome.renderOrder = -10;
+
+  // Warm vignette — cabinet framing, edges dark so the board pops.
+  const V = 512;
+  const vCanvas = document.createElement('canvas');
+  vCanvas.width = vCanvas.height = V;
+  const vCtx = vCanvas.getContext('2d');
+  const vig = vCtx.createRadialGradient(V / 2, V / 2, V * 0.28, V / 2, V / 2, V * 0.75);
+  vig.addColorStop(0.0, 'rgba(24, 13, 4, 0)');
+  vig.addColorStop(0.55, 'rgba(24, 13, 4, 0)');
+  vig.addColorStop(0.80, 'rgba(24, 13, 4, 0.28)');
+  vig.addColorStop(1.0, 'rgba(16, 8, 2, 0.60)');
+  vCtx.fillStyle = vig;
+  vCtx.fillRect(0, 0, V, V);
+
+  const vTex = new THREE.CanvasTexture(vCanvas);
+  vTex.colorSpace = THREE.SRGBColorSpace;
+
+  const vignetteDome = new THREE.Mesh(
+    new THREE.SphereGeometry(59.5, 48, 24),
+    new THREE.MeshBasicMaterial({
+      map: vTex,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+      fog: false,
+    })
+  );
+  vignetteDome.position.set(0, -8, 0);
+  vignetteDome.renderOrder = -9;
+
+  const group = new THREE.Group();
+  group.add(brickDome, vignetteDome);
+  return group;
 }
