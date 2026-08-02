@@ -885,3 +885,146 @@ body {
     display: none;
   }
 }
+
+/* ------------------------------------------------------------
+   TouchControls — botões de controle mobile (pointer:coarse)
+   Escondidos por padrão; visíveis só em telas touch (CSS puro +
+   fallback JS no TouchControls). Botões ≥48px (touch target).
+   ------------------------------------------------------------ */
+
+.m3d-touch-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  z-index: 20;
+  pointer-events: none; /* container não bloqueia o board */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.25s ease, visibility 0.25s;
+}
+
+.m3d-touch-controls--visible {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Só exibir em touch — fallback duplo (media query + classe JS) */
+@media (hover: none) and (pointer: coarse) {
+  .m3d-touch-controls {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.m3d-touch-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.m3d-touch-btn {
+  pointer-events: auto; /* botões clicáveis, container não */
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  border: 2px solid var(--m3d-gold-pale, #ead9a8);
+  background: linear-gradient(180deg, rgba(28, 32, 48, 0.92), rgba(10, 12, 20, 0.92));
+  color: #f4f6fb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.6),
+    0 6px 0 rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.m3d-touch-icon {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.m3d-touch-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.m3d-touch-btn--active {
+  transform: translateY(3px);
+  box-shadow:
+    0 0 0 rgba(0, 0, 0, 0.6),
+    0 2px 0 rgba(0, 0, 0, 0.3),
+    inset 0 2px 6px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(180deg, rgba(58, 66, 96, 0.95), rgba(24, 28, 46, 0.95));
+}
+
+/* Hard drop destaque — ação principal */
+.m3d-touch-hardDrop {
+  width: 72px;
+  height: 60px;
+  border-color: #ffc700;
+  color: #ffe14d;
+}
+.m3d-touch-hardDrop .m3d-touch-icon {
+  font-size: 26px;
+}
+
+/* Cores por função — leitura rápida no touch */
+.m3d-touch-moveLeft,
+.m3d-touch-moveRight {
+  border-color: rgba(74, 217, 247, 0.8);   /* cyan — mover */
+  color: #4ad9f7;
+}
+.m3d-touch-rotate {
+  border-color: rgba(196, 135, 255, 0.8);  /* violeta — rotacionar */
+  color: #c487ff;
+}
+.m3d-touch-softDrop {
+  border-color: rgba(91, 234, 157, 0.8);   /* verde — queda rápida */
+  color: #5bea9d;
+}
+.m3d-touch-hardDrop {
+  border-color: #ffc700;                   /* dourado — queda instantânea */
+  color: #ffe14d;
+}
+
+/* Mobile pequeno — compactar levemente mantendo ≥44px */
+@media (max-width: 420px) {
+  .m3d-touch-btn {
+    width: 56px;
+    height: 56px;
+  }
+  .m3d-touch-hardDrop {
+    width: 66px;
+  }
+  .m3d-touch-row {
+    gap: 10px;
+  }
+}
+
+/* Reduced motion: sem transição, sem animação */
+@media (prefers-reduced-motion: reduce) {
+  .m3d-touch-controls {
+    transition: none;
+  }
+  .m3d-touch-btn--active {
+    transition: none;
+  }
+}

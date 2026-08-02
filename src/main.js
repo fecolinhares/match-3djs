@@ -15,6 +15,7 @@ import { createPostFX } from './render/PostFX.js';
 import { InputManager } from './input/InputManager.js';
 import { HUD } from './ui/HUD.js';
 import { Menu } from './ui/Menu.js';
+import { TouchControls } from './ui/TouchControls.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { BOARD, RENDER, TUNING } from './config.js';
 
@@ -43,6 +44,7 @@ Particles.init?.(scene);
 const audio = new AudioManager();
 
 const hud = new HUD({ container: app });
+const touchControls = new TouchControls({ container: app });
 const menu = new Menu({
   container: app,
   onStart: () => startGame(),
@@ -211,6 +213,41 @@ input.on('moveTo', (col) => {
 });
 input.on('hover', (col) => {
   // preview highlight
+});
+
+// ------------------------------------------------------------
+// TouchControls — botões mobile emitem os mesmos eventos discretos
+// ------------------------------------------------------------
+touchControls.on('moveLeft', () => {
+  if (game?.moveLeft()) {
+    audio.play('move');
+    input.setCurrentColumn(game.snapshot().falling?.x ?? null);
+  }
+});
+touchControls.on('moveRight', () => {
+  if (game?.moveRight()) {
+    audio.play('move');
+    input.setCurrentColumn(game.snapshot().falling?.x ?? null);
+  }
+});
+touchControls.on('rotate', () => {
+  if (game?.rotate()) {
+    audio.play('rotate');
+  }
+});
+touchControls.on('softDrop', () => {
+  if (game) {
+    game.softDrop(1 / 60);
+    audio.play('land');
+  }
+});
+touchControls.on('hardDrop', () => {
+  if (game) {
+    const events = game.hardDrop();
+    audio.play('land');
+    for (const ev of events) handleGameEvent(ev);
+    boardMesh.sync(game.snapshot());
+  }
 });
 
 // ------------------------------------------------------------
