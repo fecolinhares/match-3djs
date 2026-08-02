@@ -245,7 +245,7 @@ export function createGhostMaterial(colorIndex, opacity = 0.5) {
 /** Material for selection highlight ring (animated elsewhere). */
 export function createRingMaterial() {
   return new THREE.MeshBasicMaterial({
-    color: 0x00D2FF,
+    color: 0x8a7cff, // violeta suave — seleção não compete com a gem
     transparent: true,
     opacity: 0.0,
     side: THREE.DoubleSide,

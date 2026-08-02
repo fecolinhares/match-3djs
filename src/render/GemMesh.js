@@ -135,19 +135,21 @@ export function create(colorIndex, position, opts = {}) {
   core.scale.setScalar(1.05);
 
   // Glow sprite behind the stone — SUTIL para gems assentadas.
-  // Falling gems (glowBoost) ganham glow bem maior: a coluna que cai
-  // precisa ser lida à distância, mesmo fora do viewport.
+  // Falling gems (glowBoost) ganham glow UM POUCO maior, mas NÃO
+  // exagerado: glow enorme (2.6) + opacity alta virava orbe branco
+  // cegante (especialmente Frost Diamond). Agora discreto: a leitura
+  // da coluna caindo vem do beam + ghost, não de glow branco.
   const glow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: makeGlowTexture(),
       color: new THREE.Color(def[2]),
       transparent: true,
-      opacity: glowBoost ? 0.55 : 0.22,
+      opacity: glowBoost ? 0.32 : 0.18,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
   );
-  glow.scale.setScalar(glowBoost ? 2.6 : 1.5);
+  glow.scale.setScalar(glowBoost ? 1.9 : 1.35);
   glow.position.z = -0.05;
 
   // Selection ring (hidden until selected).
@@ -156,11 +158,12 @@ export function create(colorIndex, position, opts = {}) {
   ring.visible = false;
 
   // Sparkle — brilho 4-pontas que pisca periodicamente (look Bejeweled).
-  // Pequeno sprite additive no canto superior da gem; o tick anima opacity.
+  // Tom levemente quente (não branco puro) e opacity mais contida —
+  // branco puro + additive + bloom = brilho cegante.
   const sparkle = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: makeGlowTexture(),
-      color: new THREE.Color(0xffffff),
+      color: new THREE.Color(0xfff4e0),
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -168,7 +171,7 @@ export function create(colorIndex, position, opts = {}) {
       rotation: Math.PI / 4, // vira em "X" para dar o formato 4-pontas
     })
   );
-  sparkle.scale.setScalar(0.85);
+  sparkle.scale.setScalar(0.7);
   sparkle.position.set(0.28, 0.28, 0.1);
   sparkle.userData.phase = Math.random() * Math.PI * 2; // dessincroniza os sparkles
 
@@ -301,10 +304,11 @@ function tick(dt, time) {
     u.flashT += dt;
     const p = clamp01(u.flashT / FLASH_DUR);
     // 3 full sine cycles → 3 pulses; decaying envelope.
-    const env = 1 - p * 0.55;
+    // Amplitude 1.6 (era 2.6) — pulso visível sem estourar emissive/glow.
+    const env = 1 - p * 0.5;
     const wave = Math.max(0, Math.sin(p * Math.PI * 6)) * env;
-    flashEmissive = 1 + 2.6 * wave;
-    flashScale = 1 + 0.28 * wave;
+    flashEmissive = 1 + 1.6 * wave;
+    flashScale = 1 + 0.24 * wave;
     if (p >= 1) {
       u.flashT = -1;
       const done = u.flashComplete;
@@ -343,19 +347,21 @@ function tick(dt, time) {
   // sparkle — brilho periódico (2 ciclos/s, dessincronizado por fase)
   if (!u.reduced) {
     const sp = 0.5 + 0.5 * Math.sin(time * 4.2 + u.sparkle.userData.phase);
-    // pico agudo e BRILHANTE (sp^4 acentua o pico, quase 0 entre eles)
+    // pico agudo e contido (sp^4 acentua o pico, quase 0 entre eles)
     const peak = sp * sp * sp * sp;
-    u.sparkle.material.opacity = 0.95 * peak;
-    u.sparkle.scale.setScalar(0.5 + 0.5 * peak);
+    u.sparkle.material.opacity = 0.6 * peak;
+    u.sparkle.scale.setScalar(0.42 + 0.38 * peak);
     u.sparkle.material.rotation += dt * 0.6; // leve rotação contínua (material.rotation)
   } else {
     u.sparkle.material.opacity = 0;
   }
 
   // --- materials (flash) ------------------------------------------------
+  // Flash contido: multiplicador menor para não estourar emissive/glow
+  // (antes 2.6 no pico → core 0.55*3.6=1.98 + glow 1.72 = brilho branco cegante)
   if (u.flashT >= 0 || flashEmissive !== 1) {
-    u.body.material.emissiveIntensity = 0.25 * flashEmissive;
-    u.core.material.emissiveIntensity = 0.55 * flashEmissive;
-    u.glow.material.opacity = 0.42 + 0.5 * (flashEmissive - 1);
+    u.body.material.emissiveIntensity = 0.28 * flashEmissive;
+    u.core.material.emissiveIntensity = 0.42 * flashEmissive;
+    u.glow.material.opacity = 0.18 + 0.3 * (flashEmissive - 1);
   }
 }

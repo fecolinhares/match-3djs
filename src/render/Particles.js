@@ -287,7 +287,8 @@ export function landingImpact(position, colorIndex) {
 
   spawnDust(pos, state.reduced ? 3 : 8);
   spawnSparkles(pos, def[2], state.reduced ? 2 : 5, 0.6);
-  spawnFlashSprite(pos, '#ffffff', 1.6, 0.22, 0.5); // flash branco suave
+  // flash branco BEM suave — landing não deve cegar (era 1.6/0.22/0.5)
+  spawnFlashSprite(pos, '#f4f6ff', 1.2, 0.12, 0.32);
 }
 
 // ------------------------------------------------------------
@@ -307,10 +308,11 @@ export function fallTrail(position, colorIndex) {
 export function levelUpFlash() {
   if (!state.scene) return;
   const pos = new THREE.Vector3(0, RENDER.CAMERA_LOOKAT[1], 0.2);
-  spawnFlashSprite(pos, '#ffffff', 9, 0.55, 0.95);
+  // flash branco contido (era 9/0.55/0.95 — cegava) + anéis coloridos
+  spawnFlashSprite(pos, '#f4f6ff', 5, 0.3, 0.6);
   spawnRing(pos, '#FFD60A', { slow: true });
-  spawnRing(pos, '#6FE7F5');
-  spawnSparkles(pos, '#FFD60A', state.reduced ? 4 : 10, 1.4);
+  spawnRing(pos, '#8a7cff');
+  spawnSparkles(pos, '#FFD60A', state.reduced ? 4 : 8, 1.1);
 }
 
 // ------------------------------------------------------------
