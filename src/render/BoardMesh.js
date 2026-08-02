@@ -29,8 +29,9 @@ import {
 
 const { GAP, COLS, ROWS, VISIBLE_ROWS } = BOARD;
 
-// Falling gems são ~22% maiores que as assentadas para leitura à distância.
-const FALLING_SCALE = 1.22;
+// Falling gems são ~10% maiores que as assentadas (0.85) — leitura da
+// peça ativa sem invadir as células vizinhas (era 1.22 — 'oversized').
+const FALLING_SCALE = 1.10;
 
 // Grid → world mapping. Logic y=0 is the TOP (spawn zone, off-screen);
 // 3D y grows upward, so we flip and offset so the visible band
@@ -737,7 +738,7 @@ export class BoardMesh {
         m.material.opacity = (reduced ? 0.45 : 0.4 + 0.25 * p);
       }
       for (const e of this._ghostEdges) {
-        e.scale.setScalar(1.06 * s);
+        e.scale.setScalar(0.9 * 1.06 * s);
         e.material.opacity = (reduced ? 0.7 : 0.85 + 0.15 * p);
       }
       this._ghostLine.material.opacity = (reduced ? 0.4 : 0.4 + 0.3 * p);
@@ -817,9 +818,10 @@ export class BoardMesh {
       }
       const p = cellToWorld(x, row0 - i); // base row0, gems sobem (i=0 base)
       m.position.set(p.x, p.y, p.z + 0.02);
+      m.scale.setScalar(0.9); // ghost um pouco menor que a gem real (leitura)
       if (this._ghostEdges[i]) {
         this._ghostEdges[i].position.copy(m.position);
-        this._ghostEdges[i].scale.setScalar(1.06);
+        this._ghostEdges[i].scale.setScalar(0.9 * 1.06);
       }
     }
     // linha de pouso na linha do ghost (base da coluna)

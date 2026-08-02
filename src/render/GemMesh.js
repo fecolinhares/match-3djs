@@ -230,7 +230,9 @@ function getBodyGeometry(shape) {
 export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
-  const scale = opts.scale ?? 1;
+  // scale default 0.85 p/ gems assentadas: geometria ~1.0 + outline 1.20
+  // invadia a célula vizinha (vision: 'oversized'). Falling passa 1.22.
+  const scale = opts.scale ?? 0.85;
   const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);

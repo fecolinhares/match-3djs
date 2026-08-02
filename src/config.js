@@ -63,7 +63,7 @@ export const RENDER = {
   CAMERA_LOOKAT: [0, 0, 0],  // câmera reta; board desce via BOARD_Y_OFFSET
   // Board desce na tela (topo livre para o HUD DOM). Usado pelo boardGroup
   // E pelo Y_OFFSET das gems — mover juntos mantém o alinhamento.
-  BOARD_Y_OFFSET: -2.0,  // -1.7 HUD ainda colado no board; -2.0 dá respiro
+  BOARD_Y_OFFSET: -1.3,  // -1.5 peça do fundo colava na borda mobile; -1.3 respiro
   BLOOM_STRENGTH: 0.22,  // 0.28→0.22 — outlines das gems ficam mais nítidos
   BLOOM_RADIUS: 0.42,
   BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout
