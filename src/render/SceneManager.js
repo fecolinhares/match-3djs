@@ -51,11 +51,11 @@ export function init(container) {
   // Warm key, top-left, slightly amber for cinema warmth.
   // Alta intensidade + direção dura = facetas com sombras dramáticas
   // (cada face do octaedro pega luz diferente → vende volume da pedra).
-  const key = new THREE.DirectionalLight(0xffe3b8, 3.0);
+  const key = new THREE.DirectionalLight(0xffe3b8, 3.4);
   key.position.set(-6, 10, 7);
 
   // Cool blue hemisphere fill — LEVE, para não lavar o contraste das facetas.
-  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, 0.35);
+  const fill = new THREE.HemisphereLight(0x8fb2ff, 0x1a1226, 0.45);
 
   // Violet rim point behind the board — separates gems from the bg.
   const rim = new THREE.PointLight(0x7b2fff, RENDER.RIM_LIGHT_INTENSITY, 45, 2.0);
@@ -63,6 +63,13 @@ export function init(container) {
 
   // Low cyan ambient — DESIGN accent-cyan tint, very subtle.
   const ambient = new THREE.AmbientLight(0x00d2ff, RENDER.AMBIENT_INTENSITY);
+
+  // Soft spotlight frontal — foca o tabuleiro (centro do board brilha,
+  // bordas caem), look "holofote de palco" dos match-3 modernos.
+  const spot = new THREE.SpotLight(0xcfe8ff, 90, 40, 0.55, 0.65, 1.2);
+  spot.position.set(0, 9, 10);
+  spot.target.position.set(0, RENDER.CAMERA_LOOKAT[1], 0);
+  scene.add(spot, spot.target);
 
   scene.add(key, fill, rim, ambient);
 
@@ -118,7 +125,7 @@ function buildBackdropDome() {
     size / 2,
     size * 0.72
   );
-  grad.addColorStop(0.0, '#191A2E');
+  grad.addColorStop(0.0, '#1E2036'); // leve lift cyan-violeta no centro
   grad.addColorStop(0.45, '#10101C');
   grad.addColorStop(1.0, '#0A0A12');
   ctx.fillStyle = grad;

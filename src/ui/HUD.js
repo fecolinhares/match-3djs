@@ -1,5 +1,5 @@
 // ============================================================
-// Match-3D.js — HUD (DOM overlay glass)
+// Match-3D.js — HUD (DOM overlay glass premium)
 //
 // Contrato (ARCHITECTURE.md):
 //   HUD.update(score, level, lines, combo)  — atualiza DOM
@@ -7,16 +7,17 @@
 //   HUD.showCombo(n)                        — texto flutuante "COMBO xn"
 //
 // Extensões: show(), hide(), destroy().
-// Estética (DESIGN.md): glassmorphism (blur 16px, border 10%,
-// radius 16px, sombra profunda), score em JetBrains Mono com
-// tween de contagem, barra de progresso cyan→violet.
+// Estética (DESIGN.md): glassmorphism premium — borda gradiente
+// cyan→violet, blur 16px, shine sweep animado, score com count-up
+// + pop de escala, combo badge dramático por tier (rare/epic/legend),
+// preview em slots emoldurados (células arredondadas com sombra interna).
 // ============================================================
 
 import { GEM_DEFS, SCORING } from '../config.js';
 import './ui.css';
 
 const SCORE_TWEEN_MS = 380;
-const COMBO_LIFETIME_MS = 700;
+const COMBO_LIFETIME_MS = 1150;
 
 /** Injeta os <link> do Google Fonts uma única vez (idempotente). */
 function injectFonts() {
@@ -27,6 +28,16 @@ function injectFonts() {
   link.href =
     'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap';
   document.head.appendChild(link);
+}
+
+/**
+ * Tier do combo para cor/estilo dramático:
+ *   2-3  → 'rare'   (cyan)
+ *   4-5  → 'epic'   (violeta)
+ *   6+   → 'legend' (dourado)
+ */
+function comboClass(n) {
+  return n >= 6 ? 'legend' : n >= 4 ? 'epic' : 'rare';
 }
 
 export class HUD {
@@ -80,7 +91,7 @@ export class HUD {
     scoreRow.append(this._scoreEl, this._comboBadge);
     scorePanel.append(scoreLabel, scoreRow);
 
-    // Next preview
+    // Next preview — slots emoldurados (célula + gem dentro)
     const nextPanel = document.createElement('div');
     nextPanel.className = 'm3d-hud-panel m3d-hud-next';
 
@@ -130,11 +141,22 @@ export class HUD {
     this._root = root;
   }
 
+  /* ---------------- Helpers de animação ---------------- */
+
+  /** Reinicia uma animação CSS (remove → reflow → adiciona). */
+  _retrigger(el, cls) {
+    if (this._reduced) return;
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+
   /* ---------------- Atualização ---------------- */
 
   /**
    * Atualiza score, level, lines e combo no DOM.
-   * O score sobe com tween numérico (expo-out); respeita reduced-motion.
+   * O score sobe com tween numérico (expo-out) + pop de escala;
+   * respeita reduced-motion.
    */
   update(score, level, lines, combo) {
     this._setScore(score ?? 0);
@@ -143,7 +165,9 @@ export class HUD {
 
     if (combo > 1) {
       this._comboBadge.textContent = `x${combo}`;
+      this._comboBadge.dataset.tier = comboClass(combo);
       this._comboBadge.hidden = false;
+      this._retrigger(this._comboBadge, 'm3d-badge-pop');
     } else {
       this._comboBadge.hidden = true;
     }
@@ -152,11 +176,13 @@ export class HUD {
   }
 
   _setScore(target) {
+    const grew = target > this._displayScore;
     this._targetScore = target;
     if (this._tweenId !== null) {
       cancelAnimationFrame(this._tweenId);
       this._tweenId = null;
     }
+    if (grew) this._retrigger(this._scoreEl, 'm3d-score-pop');
     if (this._reduced) {
       this._displayScore = target;
       this._renderScore();
@@ -167,9 +193,12 @@ export class HUD {
     const ease = (t) => 1 - Math.pow(2, -10 * t); // expo-out
     const step = (now) => {
       const t = Math.min(1, (now - t0) / SCORE_TWEEN_MS);
-      this._displayScore = Math.round(start + (target - start) * ease(t));
+      const done = t >= 1;
+      this._displayScore = done
+        ? target
+        : Math.round(start + (target - start) * ease(t));
       this._renderScore();
-      this._tweenId = t < 1 ? requestAnimationFrame(step) : null;
+      this._tweenId = done ? null : requestAnimationFrame(step);
     };
     this._tweenId = requestAnimationFrame(step);
   }
@@ -184,7 +213,8 @@ export class HUD {
   }
 
   /**
-   * Renderiza a mini coluna com as 3 próximas gems.
+   * Renderiza a mini coluna com as 3 próximas gems,
+   * cada uma dentro de um slot emoldurado (.m3d-next-cell).
    * @param {number[]} colors Índices de cor (0-6) — ver GEM_DEFS.
    */
   setNextPreview(colors) {
@@ -193,6 +223,8 @@ export class HUD {
       Array.isArray(colors) && colors.length >= 3 ? colors : [null, null, null];
     for (let i = 0; i < 3; i++) {
       const idx = list[i];
+      const cell = document.createElement('div');
+      cell.className = 'm3d-next-cell';
       const el = document.createElement('div');
       const def = Number.isInteger(idx) ? GEM_DEFS[idx] : null;
       if (def) {
@@ -202,14 +234,19 @@ export class HUD {
       } else {
         el.className = 'm3d-next-gem m3d-next-empty';
       }
-      this._nextStack.appendChild(el);
+      cell.appendChild(el);
+      this._nextStack.appendChild(cell);
     }
   }
 
-  /** Texto flutuante "COMBO xn" com scale-in + fade-up (0.6s). */
+  /**
+   * Texto flutuante "COMBO xn" — scale-in overshoot + flash + fade-up,
+   * cor por tier (rare/epic/legend). Removido após a animação.
+   */
   showCombo(n) {
     const el = document.createElement('div');
     el.className = 'm3d-combo-text';
+    el.dataset.tier = comboClass(n);
     el.textContent = `COMBO x${n}`;
     this._comboLayer.appendChild(el);
     if (this._reduced) {

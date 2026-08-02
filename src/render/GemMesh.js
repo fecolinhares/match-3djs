@@ -104,11 +104,16 @@ function tintFacets(geometry) {
 }
 
 // ------------------------------------------------------------
-// create(colorIndex, position) → THREE.Group
+// create(colorIndex, position, opts) → THREE.Group
+//   opts.scale      — base scale (default 1). Falling gems pass >1
+//                     (they never tick, so scale must be set here).
+//   opts.glowBoost  — bigger/brighter glow sprite (falling column).
 // ------------------------------------------------------------
-export function create(colorIndex, position) {
+export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
+  const scale = opts.scale ?? 1;
+  const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);
   const coreMat = createCoreMaterial(colorIndex);
@@ -129,19 +134,20 @@ export function create(colorIndex, position) {
   core.rotation.x = 0.3;
   core.scale.setScalar(1.05);
 
-  // Glow sprite behind the stone — SUTIL. Glow demais = "neon", não pedra.
-  // O Bejeweled deixa facetas + reflexos dominarem; glow é apoio, não estrela.
+  // Glow sprite behind the stone — SUTIL para gems assentadas.
+  // Falling gems (glowBoost) ganham glow bem maior: a coluna que cai
+  // precisa ser lida à distância, mesmo fora do viewport.
   const glow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: makeGlowTexture(),
       color: new THREE.Color(def[2]),
       transparent: true,
-      opacity: 0.22,
+      opacity: glowBoost ? 0.55 : 0.22,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
   );
-  glow.scale.setScalar(1.5);
+  glow.scale.setScalar(glowBoost ? 2.6 : 1.5);
   glow.position.z = -0.05;
 
   // Selection ring (hidden until selected).
@@ -174,7 +180,7 @@ export function create(colorIndex, position) {
     z: position.z,
   };
   group.position.set(start.x, start.y, start.z);
-  group.scale.setScalar(0.2);
+  group.scale.setScalar(0.2 * scale); // falling gems: 0.2×scale pop-in start
 
   group.userData = {
     group,
@@ -190,6 +196,7 @@ export function create(colorIndex, position) {
     // tween: current motion
     tween: { t: 0, from: { ...start }, to: { ...position }, dur: SPAWN_DUR, ease: easeOutElastic },
     base: { x: position.x, y: position.y, z: position.z },
+    scaleBoost: scale, // aplicado no tick (falling gems: nunca tick, fica fixo)
     popT: 0, // scale-in animation progress (0..1)
     popScale: 0.001,
     sel: 0, // 0..1 selected pose blend
@@ -230,6 +237,7 @@ export function snapTo(group, position) {
   u.popT = 1;
   u.popScale = 1;
   u.tween.t = 1;
+  group.scale.setScalar(u.scaleBoost ?? 1);
 }
 
 /** Scale pop-in at the current position (landing / placement). */
@@ -313,7 +321,7 @@ function tick(dt, time) {
     u.popT = clamp01(u.popT + dt / 0.22);
     u.popScale = easeOutBack(u.popT);
   }
-  group.scale.setScalar(selScale * flashScale * u.popScale);
+  group.scale.setScalar(selScale * flashScale * u.popScale * u.scaleBoost);
 
   // idle rotation (skip under reduced motion)
   if (!u.reduced) {

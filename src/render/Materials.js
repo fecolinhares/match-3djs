@@ -34,6 +34,116 @@ export function makeGlowTexture() {
 }
 
 /**
+ * Vertical gradient texture (cyan beam): bright center → transparent
+ * top/bottom. Usado no column highlight beam e no trail da coluna que cai.
+ */
+let _beamTexture = null;
+export function makeBeamTexture() {
+  if (_beamTexture) return _beamTexture;
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createLinearGradient(0, 0, 0, size);
+  grad.addColorStop(0.0, 'rgba(255,255,255,0)');
+  grad.addColorStop(0.5, 'rgba(255,255,255,0.9)');
+  grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  _beamTexture = new THREE.CanvasTexture(canvas);
+  _beamTexture.colorSpace = THREE.SRGBColorSpace;
+  return _beamTexture;
+}
+
+/**
+ * Soft radial backdrop texture (cyan center → violet mid → transparent),
+ * para o halo de luz atrás do tabuleiro.
+ */
+let _backdropTexture = null;
+export function makeBackdropTexture() {
+  if (_backdropTexture) return _backdropTexture;
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(
+    size / 2, size / 2, 0,
+    size / 2, size / 2, size / 2
+  );
+  grad.addColorStop(0.0, 'rgba(255,255,255,0.85)');
+  grad.addColorStop(0.4, 'rgba(255,255,255,0.30)');
+  grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  _backdropTexture = new THREE.CanvasTexture(canvas);
+  _backdropTexture.colorSpace = THREE.SRGBColorSpace;
+  return _backdropTexture;
+}
+
+/**
+ * Rounded-rect frame texture (cyan glow outline + violet hairline inner),
+ * para a moldura premium do tabuleiro. Square canvas — the board plane
+ * keeps aspect via its own geometry.
+ */
+let _frameTexture = null;
+export function makeFrameTexture() {
+  if (_frameTexture) return _frameTexture;
+  const size = 1024;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const inset = size * 0.02;
+  const w = size - inset * 2;
+  const h = size - inset * 2;
+  const r = size * 0.055;
+
+  const roundRect = (x, y, w2, h2, r2) => {
+    ctx.beginPath();
+    ctx.moveTo(x + r2, y);
+    ctx.arcTo(x + w2, y, x + w2, y + h2, r2);
+    ctx.arcTo(x + w2, y + h2, x, y + h2, r2);
+    ctx.arcTo(x, y + h2, x, y, r2);
+    ctx.arcTo(x, y, x + w2, y, r2);
+    ctx.closePath();
+  };
+
+  // outer cyan glow (shadowBlur = glow)
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,210,255,0.95)';
+  ctx.shadowBlur = 30;
+  ctx.strokeStyle = 'rgba(0,210,255,0.9)';
+  ctx.lineWidth = 6;
+  roundRect(inset, inset, w, h, r);
+  ctx.stroke();
+  ctx.restore();
+
+  // inner violet hairline accent
+  ctx.strokeStyle = 'rgba(123,47,255,0.5)';
+  ctx.lineWidth = 2;
+  roundRect(inset + 9, inset + 9, w - 18, h - 18, Math.max(0, r - 9));
+  ctx.stroke();
+
+  // corner accent dots (cyan)
+  const dot = (x, y) => {
+    ctx.fillStyle = 'rgba(0,210,255,0.9)';
+    ctx.beginPath();
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  dot(inset + 14, inset + 14);
+  dot(inset + w - 14, inset + 14);
+  dot(inset + 14, inset + h - 14);
+  dot(inset + w - 14, inset + h - 14);
+
+  _frameTexture = new THREE.CanvasTexture(canvas);
+  _frameTexture.colorSpace = THREE.SRGBColorSpace;
+  return _frameTexture;
+}
+
+/**
  * Normalize any color-ish input (hex string, number, THREE.Color) to THREE.Color.
  */
 export function toColor(value) {
@@ -118,8 +228,10 @@ export function createCoreMaterial(colorIndex) {
 
 /**
  * Material for ghost / preview gems (translucent column preview).
+ * Stronger than before: higher base opacity + additive blending reads
+ * as a glowing hologram instead of a faint outline.
  */
-export function createGhostMaterial(colorIndex, opacity = 0.22) {
+export function createGhostMaterial(colorIndex, opacity = 0.5) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   return new THREE.MeshBasicMaterial({
     color: new THREE.Color(def[1]),

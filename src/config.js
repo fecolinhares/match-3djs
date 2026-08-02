@@ -7,6 +7,7 @@ export const BOARD = {
   COLS: 8,
   ROWS: 12,          // total rows; top 2-3 são off-screen (spawn zone)
   VISIBLE_ROWS: 8,   // rows visíveis no viewport
+  VISIBLE_START: 4,  // primeira row visível (ROWS - VISIBLE_ROWS)
   CELL_SIZE: 1.0,
   GAP: 1.12,         // espaçamento entre células (respiro visual)
   LAND_DELAY: 0.25,  // segundos antes de checar match após pousar
@@ -14,10 +15,18 @@ export const BOARD = {
 
 export const COLUMN = {
   GEMS_PER_COLUMN: 3,
-  BASE_FALL_INTERVAL: 0.85,  // segundos por célula no nível 1
+  // Altura de spawn da base da coluna. Antes era -3 (totalmente fora da
+  // tela) e com BASE_FALL_INTERVAL 0.85s a coluna levava ~6s para aparecer
+  // no viewport — o jogador achava que o jogo travou. Agora nasce logo
+  // acima da faixa visível (VISIBLE_START - 3 = 1): gems nas rows -1..1,
+  // já na borda superior da tela. Game over segue funcionando: se o topo
+  // está cheio, canPlace() falha no spawn → over=true imediato.
+  SPAWN_Y: 1,                // base da coluna no spawn (VISIBLE_START - 3)
+  BASE_FALL_INTERVAL: 0.55,  // segundos por célula no nível 1 (era 0.85 — lento)
   MIN_FALL_INTERVAL: 0.18,   // teto de velocidade
   LEVEL_SPEEDUP: 0.06,       // redução por nível
-  SOFT_DROP_MULT: 0.12,      // velocidade do soft drop
+  SOFT_DROP_MULT: 0.06,      // fração do intervalo por célula no soft drop
+                             // (0.06 → ~30 células/s, claramente rápido)
 };
 
 export const GEM_COLORS = 6; // 6 cores + wild (índice 6)

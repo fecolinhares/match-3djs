@@ -2,26 +2,31 @@
 // Match-3D.js — Particles.js
 // Contract:
 //   Particles.init(scene)
-//   Particles.explode(position, colorIndex, count)  — fragments + sparkles
-//   Particles.sparkle(position, color)              — point flash
+//   Particles.explode(position, colorIndex, count)   — fragments + sparkles + ring
+//   Particles.shockwave(position, colorIndex)        — anel duplo + flash colorido (match central)
+//   Particles.landingImpact(position, colorIndex)    — poeira + flash branco (pouso de coluna)
+//   Particles.fallTrail(position, colorIndex)        — faíscas minúsculas de trilha (queda)
+//   Particles.levelUpFlash()                         — flash de tabuleiro inteiro (level up)
+//   Particles.sparkle(position, color)               — point flash
 //   Particles.update(dt, time)
 //   Particles.dispose()
-// Design: gem shard fragments + additive sparkles + shockwave ring +
-//         light pool + ambient cosmic dust (~200 pts).
-//         Everything pooled; hard cap ~490 particles total.
+// Design: gem shard fragments + additive sparkles (com gravidade/expansão
+//         para poeira) + shockwave rings + light pools/flashs +
+//         ambient cosmic dust (~180 pts).
+//         Everything pooled; hard cap ~482 particles total (< 500).
 // ============================================================
 
 import * as THREE from 'three';
-import { GEM_DEFS, TUNING } from '../config.js';
+import { GEM_DEFS, TUNING, RENDER } from '../config.js';
 import { makeGlowTexture, toColor } from './Materials.js';
 import { clamp01, easeOutCubic, isReducedMotion } from './GemMesh.js';
 
-// Pool budgets (total ≈ 40 + 240 + 200 + 4 + 6 = 490 < 500)
-const FRAGMENT_POOL = 40;
+// Pool budgets (total ≈ 48 + 240 + 180 + 8 + 6 = 482 < 500)
+const FRAGMENT_POOL = 48;
 const SPARK_POOL = 240;
-const RING_POOL = 4;
+const RING_POOL = 8;
 const POOL_SPRITE_POOL = 6;
-const DUST_COUNT = 200;
+const DUST_COUNT = 180;
 
 const GRAVITY = -7.5; // world units/s² (floaty, not punishing)
 const DUST_DRIFT = 0.06;
@@ -43,6 +48,8 @@ const state = {
     sizes: null,
     alphas: null,
     vel: null,
+    grav: null, // aceleração por eixo (poeira cai, faíscas sobem)
+    grow: null, // taxa de expansão do tamanho (poeira expande)
     life: null,
     age: null,
     cursor: 0,
@@ -142,6 +149,8 @@ export function init(scene) {
   sp.sizes = new Float32Array(SPARK_POOL);
   sp.alphas = new Float32Array(SPARK_POOL);
   sp.vel = new Float32Array(SPARK_POOL * 3);
+  sp.grav = new Float32Array(SPARK_POOL * 3);
+  sp.grow = new Float32Array(SPARK_POOL);
   sp.life = new Float32Array(SPARK_POOL);
   sp.age = new Float32Array(SPARK_POOL);
 
@@ -237,6 +246,7 @@ export function init(scene) {
 
 // ------------------------------------------------------------
 // explode(position, colorIndex, count)
+// Explosão de gem: fragmentos + faíscas + anel + poça de luz.
 // ------------------------------------------------------------
 export function explode(position, colorIndex, count = TUNING.EXPLOSION_PARTICLES) {
   if (!state.scene) return;
@@ -248,6 +258,59 @@ export function explode(position, colorIndex, count = TUNING.EXPLOSION_PARTICLES
   spawnSparkles(pos, def[2], Math.max(4, Math.floor(n / 2) + 3));
   spawnRing(pos, def[2]);
   spawnPoolSprite(pos, def[2]);
+}
+
+// ------------------------------------------------------------
+// shockwave(position, colorIndex) — explosão central de match:
+// anel duplo (rápido + lento) + flash colorido + rajada de faíscas.
+// ------------------------------------------------------------
+export function shockwave(position, colorIndex) {
+  if (!state.scene) return;
+  const pos = toVector3(position);
+  const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
+  const hex = def[2];
+
+  spawnRing(pos, hex, { slow: true });          // onda larga, lenta
+  spawnRing(pos, hex);                           // onda rápida
+  spawnFlashSprite(pos, hex, 3.6, 0.34);         // flash colorido central
+  spawnSparkles(pos, hex, state.reduced ? 6 : 14, 1.6);
+}
+
+// ------------------------------------------------------------
+// landingImpact(position, colorIndex) — pouso de coluna:
+// poeira que sobe e cai + flash branco suave.
+// ------------------------------------------------------------
+export function landingImpact(position, colorIndex) {
+  if (!state.scene) return;
+  const pos = toVector3(position);
+  const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
+
+  spawnDust(pos, state.reduced ? 3 : 8);
+  spawnSparkles(pos, def[2], state.reduced ? 2 : 5, 0.6);
+  spawnFlashSprite(pos, '#ffffff', 1.6, 0.22, 0.5); // flash branco suave
+}
+
+// ------------------------------------------------------------
+// fallTrail(position, colorIndex) — trilha de queda da coluna:
+// 2 faíscas minúsculas por passo (barato).
+// ------------------------------------------------------------
+export function fallTrail(position, colorIndex) {
+  if (!state.scene || state.reduced) return;
+  const pos = toVector3(position);
+  const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
+  spawnSparkles(pos, def[2], 2, 0.3);
+}
+
+// ------------------------------------------------------------
+// levelUpFlash() — flash de tabuleiro inteiro + anéis + ouro.
+// ------------------------------------------------------------
+export function levelUpFlash() {
+  if (!state.scene) return;
+  const pos = new THREE.Vector3(0, RENDER.CAMERA_LOOKAT[1], 0.2);
+  spawnFlashSprite(pos, '#ffffff', 9, 0.55, 0.95);
+  spawnRing(pos, '#FFD60A', { slow: true });
+  spawnRing(pos, '#6FE7F5');
+  spawnSparkles(pos, '#FFD60A', state.reduced ? 4 : 10, 1.4);
 }
 
 // ------------------------------------------------------------
@@ -289,12 +352,21 @@ export function update(dt, time) {
     if (sp.age[i] >= sp.life[i]) continue;
     sp.age[i] += dt;
     const p = clamp01(sp.age[i] / sp.life[i]);
+    // gravidade individual (poeira cai; faíscas normais flutuam)
+    sp.vel[i * 3 + 1] += sp.grav[i * 3 + 1] * dt;
+    sp.vel[i * 3] += sp.grav[i * 3] * dt;
+    sp.vel[i * 3 + 2] += sp.grav[i * 3 + 2] * dt;
     sp.positions[i * 3] += sp.vel[i * 3] * dt;
     sp.positions[i * 3 + 1] += sp.vel[i * 3 + 1] * dt;
     sp.positions[i * 3 + 2] += sp.vel[i * 3 + 2] * dt;
     const fade = (1 - p) * (1 - p);
     sp.alphas[i] = 0.9 * fade;
-    sp.sizes[i] = sp.sizes[i] * 0.99 + 0.5 * 0.01;
+    // expansão (poeira) ou encolhimento (faísca)
+    if (sp.grow[i] > 0) {
+      sp.sizes[i] = Math.min(6, sp.sizes[i] + sp.grow[i] * dt);
+    } else {
+      sp.sizes[i] = sp.sizes[i] * 0.99 + 0.5 * 0.01;
+    }
     dirty = true;
   }
   if (dirty) {
@@ -309,20 +381,28 @@ export function update(dt, time) {
     const u = r.userData;
     u.age += dt;
     const p = clamp01(u.age / u.life);
-    const s = 0.4 + 3.4 * easeOutCubic(p);
+    const s = 0.4 + (u.scaleEnd - 0.4) * easeOutCubic(p);
     r.scale.setScalar(s);
-    r.material.opacity = 0.55 * (1 - p);
+    r.material.opacity = u.opacity0 * (1 - p);
     if (p >= 1) r.visible = false;
   }
 
-  // --- light pools ------------------------------------------------
+  // --- light pools + flashes --------------------------------------
   for (const s of state.pools) {
     if (!s.visible) continue;
     const u = s.userData;
     u.age += dt;
     const p = clamp01(u.age / u.life);
-    s.material.opacity = 0.5 * (1 - p) * (1 - p);
-    s.scale.setScalar(2.0 + 0.8 * p);
+    if (u.flash) {
+      // flash: escala rápida + fade curto
+      const pop = p < 0.25 ? easeOutCubic(p / 0.25) : 1;
+      s.material.opacity = u.opacity0 * (1 - p) * (1 - p);
+      s.scale.setScalar(u.flashScale * (0.4 + 0.6 * pop));
+    } else {
+      // poça de luz: assenta e cresce levemente
+      s.material.opacity = 0.5 * (1 - p) * (1 - p);
+      s.scale.setScalar(2.0 + 0.8 * p);
+    }
     if (p >= 1) s.visible = false;
   }
 
@@ -409,6 +489,10 @@ function spawnSparkles(pos, hexColor, n, scale = 1) {
     sp.vel[idx * 3] = (Math.random() * 2 - 1) * 1.8 * scale;
     sp.vel[idx * 3 + 1] = Math.random() * 2.6 * scale + 0.4;
     sp.vel[idx * 3 + 2] = (Math.random() * 2 - 1) * 1.2 * scale;
+    sp.grav[idx * 3] = 0;
+    sp.grav[idx * 3 + 1] = 0;
+    sp.grav[idx * 3 + 2] = 0;
+    sp.grow[idx] = 0;
     sp.life[idx] = 0.35 + Math.random() * 0.4;
     sp.age[idx] = 0;
   }
@@ -418,16 +502,52 @@ function spawnSparkles(pos, hexColor, n, scale = 1) {
   sp.alphas.needsUpdate = true;
 }
 
-function spawnRing(pos, hexColor) {
+/** Poeira de impacto: grãos claros que sobem com gravidade e expandem. */
+function spawnDust(pos, n) {
+  const sp = state.spark;
+  for (let i = 0; i < n; i++) {
+    const idx = sp.cursor;
+    sp.cursor = (sp.cursor + 1) % SPARK_POOL;
+    const spread = 0.5 + Math.random() * 0.5;
+    const ang = Math.random() * Math.PI * 2;
+    sp.positions[idx * 3] = pos.x + Math.cos(ang) * spread * 0.35;
+    sp.positions[idx * 3 + 1] = pos.y + 0.1 + Math.random() * 0.25;
+    sp.positions[idx * 3 + 2] = pos.z + Math.sin(ang) * spread * 0.3;
+    // cinza claro → azulado, como poeira iluminada
+    const g = 0.7 + Math.random() * 0.3;
+    sp.colors[idx * 3] = 0.85 * g;
+    sp.colors[idx * 3 + 1] = 0.9 * g;
+    sp.colors[idx * 3 + 2] = g;
+    sp.sizes[idx] = 0.8 + Math.random() * 1.1;
+    sp.alphas[idx] = 0.85;
+    sp.vel[idx * 3] = Math.cos(ang) * (0.7 + Math.random() * 1.3);
+    sp.vel[idx * 3 + 1] = 1.6 + Math.random() * 2.2;
+    sp.vel[idx * 3 + 2] = Math.sin(ang) * (0.5 + Math.random() * 0.8);
+    sp.grav[idx * 3] = 0;
+    sp.grav[idx * 3 + 1] = -7.5; // cai como poeira real
+    sp.grav[idx * 3 + 2] = 0;
+    sp.grow[idx] = 2.2; // expande enquanto cai
+    sp.life[idx] = 0.45 + Math.random() * 0.35;
+    sp.age[idx] = 0;
+  }
+  sp.positions.needsUpdate = true;
+  sp.colors.needsUpdate = true;
+  sp.sizes.needsUpdate = true;
+  sp.alphas.needsUpdate = true;
+}
+
+function spawnRing(pos, hexColor, opts = {}) {
   if (state.reduced) return;
   const r = state.rings[state.ringCursor];
   state.ringCursor = (state.ringCursor + 1) % RING_POOL;
   r.material.color.set(hexColor);
   r.position.set(pos.x, pos.y, pos.z + 0.05);
   r.userData.age = 0;
-  r.userData.life = 0.42;
+  r.userData.life = opts.slow ? 0.75 : 0.42;
+  r.userData.scaleEnd = opts.slow ? 7.5 : 3.8;
+  r.userData.opacity0 = opts.slow ? 0.35 : 0.55;
   r.scale.setScalar(0.4);
-  r.material.opacity = 0.55;
+  r.material.opacity = r.userData.opacity0;
   r.visible = true;
 }
 
@@ -438,6 +558,23 @@ function spawnPoolSprite(pos, hexColor) {
   s.position.set(pos.x, pos.y, -0.35);
   s.userData.age = 0;
   s.userData.life = 0.6;
+  s.userData.flash = false;
   s.material.opacity = 0.5;
+  s.visible = true;
+}
+
+/** Flash luminoso: sprite additive que aparece instantâneo e some. */
+function spawnFlashSprite(pos, hexColor, scale = 3, life = 0.3, opacity = 0.85) {
+  if (state.reduced) return;
+  const s = state.pools[state.poolCursor];
+  state.poolCursor = (state.poolCursor + 1) % POOL_SPRITE_POOL;
+  s.material.color.set(hexColor);
+  s.position.set(pos.x, pos.y, pos.z + 0.1);
+  s.userData.age = 0;
+  s.userData.life = life;
+  s.userData.flash = true;
+  s.userData.flashScale = scale;
+  s.userData.opacity0 = opacity;
+  s.material.opacity = opacity;
   s.visible = true;
 }

@@ -1,14 +1,15 @@
 // ============================================================
-// Match-3D.js — Menu (overlay glass: menu principal + game over)
+// Match-3D.js — Menu (overlay glass premium: menu + game over)
 //
 // Contrato (ARCHITECTURE.md):
 //   Menu.show('menu'|'gameover', { score, best })
 //   Menu.hide()
 //   Enter/Space no teclado inicia (ou reinicia) o jogo.
 //
-// Estética (DESIGN.md): overlay semi-transparente (rgba(10,10,18,0.72)
-// + blur) deixando o mundo 3D visível; transições fade+scale 0.3s.
-// Best score persistido em localStorage ('match3d-best').
+// Estética (DESIGN.md): overlay com aurora animada (blobs cyan/
+// violet/ruby + partículas ascendentes, 100% CSS), card com borda
+// gradiente cyan→violet, título com gradiente + glow, botão pill
+// dark (#2E2E3A) com glow cyan no hover. Best em localStorage.
 // ============================================================
 
 import './ui.css';
@@ -29,6 +30,8 @@ function injectFonts() {
 
 const SCORE_TWEEN_MS = 500;
 const easeOutExpo = (t) => 1 - Math.pow(2, -10 * t);
+
+const PARTICLE_COUNT = 16;
 
 export class Menu {
   /**
@@ -69,6 +72,8 @@ export class Menu {
     const root = document.createElement('div');
     root.className = 'm3d-menu';
     root.hidden = true;
+
+    this._buildBackground(root);
 
     const card = document.createElement('div');
     card.className = 'm3d-menu-card';
@@ -125,6 +130,43 @@ export class Menu {
     root.appendChild(card);
     this._container.appendChild(root);
     this._root = root;
+  }
+
+  /**
+   * Fundo animado 100% CSS: 3 blobs de aurora (cyan/violet/ruby)
+   * derivando em loop + partículas ascendentes com posição/delay
+   * aleatórios (geradas via JS, animadas via CSS).
+   */
+  _buildBackground(root) {
+    const bg = document.createElement('div');
+    bg.className = 'm3d-menu-bg';
+    bg.setAttribute('aria-hidden', 'true');
+
+    const blobCls = [
+      'm3d-menu-blob m3d-menu-blob--cyan',
+      'm3d-menu-blob m3d-menu-blob--violet',
+      'm3d-menu-blob m3d-menu-blob--ruby',
+    ];
+    for (const cls of blobCls) {
+      const blob = document.createElement('div');
+      blob.className = cls;
+      bg.appendChild(blob);
+    }
+
+    const particles = document.createElement('div');
+    particles.className = 'm3d-menu-particles';
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = document.createElement('span');
+      p.className = 'm3d-menu-particle';
+      p.style.left = `${(Math.random() * 100).toFixed(2)}%`;
+      p.style.animationDelay = `${(Math.random() * 14).toFixed(2)}s`;
+      p.style.animationDuration = `${(9 + Math.random() * 9).toFixed(2)}s`;
+      p.style.setProperty('--p-size', `${(2 + Math.random() * 3.5).toFixed(1)}px`);
+      particles.appendChild(p);
+    }
+    bg.appendChild(particles);
+
+    root.appendChild(bg);
   }
 
   /* ---------------- Exibição ---------------- */
@@ -252,8 +294,11 @@ export class Menu {
     const t0 = performance.now();
     const step = (now) => {
       const t = Math.min(1, (now - t0) / SCORE_TWEEN_MS);
-      el.textContent = Math.round(start + (target - start) * easeOutExpo(t)).toLocaleString('en-US');
-      if (t < 1) this._tweenId = requestAnimationFrame(step);
+      const done = t >= 1;
+      el.textContent = done
+        ? target.toLocaleString('en-US')
+        : Math.round(start + (target - start) * easeOutExpo(t)).toLocaleString('en-US');
+      if (!done) this._tweenId = requestAnimationFrame(step);
       else this._tweenId = null;
     };
     if (this._tweenId !== null) cancelAnimationFrame(this._tweenId);

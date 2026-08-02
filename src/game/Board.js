@@ -50,12 +50,41 @@ export class Board {
   }
 
   _randomColumn() {
-    const gems = [
+    // Evita colunas que criariam match IMEDIATO no spawn (ex: 3 iguais
+    // ou que completam uma linha com gems vizinhas já no grid).
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const gems = [
+        this._randomColor(true),
+        this._randomColor(true),
+        this._randomColor(true),
+      ];
+      if (!this._wouldMatchOnSpawn(gems)) return gems;
+    }
+    // Fallback defensivo: aceita a última (evita loop infinito).
+    return [
       this._randomColor(true),
       this._randomColor(true),
       this._randomColor(true),
     ];
-    return gems;
+  }
+
+  /**
+   * True se a coluna, ao nascer na posição de spawn, já forma um match
+   * (vertical com gems abaixo, ou horizontal/diagonal com vizinhas).
+   * Simula a colocação num clone do grid e roda o detector.
+   */
+  _wouldMatchOnSpawn(gems) {
+    const startX = Math.floor(this.cols / 2) - 1;
+    const startY = COLUMN.SPAWN_Y;
+    const clone = this.grid.map((row) => row.slice());
+    // gems[0]=topo fica em startY-2 (fora do grid, não forma match);
+    // gems[1]=meio em startY-1 e gems[2]=base em startY entram no grid.
+    const rows = [startY - 1, startY];
+    for (let i = 0; i < 2; i++) {
+      const y = rows[i];
+      if (y >= 0 && y < this.rows) clone[y][startX] = gems[i + 1];
+    }
+    return this.detector.findMatches(clone).length > 0;
   }
 
   /** Pré-gera a próxima coluna (para preview no HUD). */
@@ -85,13 +114,14 @@ export class Board {
     this.generateNext(); // prepara a próxima
 
     const startX = Math.floor(this.cols / 2) - 1;
-    // A coluna nasce acima do topo (y negativo) e cai para dentro do grid.
-    // gems[0]=topo, gems[2]=base. Base começa em y=-3 (totalmente fora),
-    // e cai aumentando y até pousar no fundo.
-    const startY = -3;
+    // A coluna nasce logo acima/na borda superior da faixa visível
+    // (base em COLUMN.SPAWN_Y — antes y=-3, totalmente fora da tela,
+    // o que atrasava ~6s a aparição). Cair significa y AUMENTAR até
+    // pousar no fundo.
+    const startY = COLUMN.SPAWN_Y;
     const column = new FallingColumn(startX, gems, startY);
 
-    // Se não dá pra colocar (já ocupado), game over
+    // Se não dá pra colocar (topo cheio / já ocupado), game over
     if (!this.detector.canPlace(this.grid, column)) {
       this.over = true;
       this._emit('onGameOver', { score: this.score, level: this.level });
@@ -102,6 +132,8 @@ export class Board {
     this.landing = false;
     this.resolving = false;
     this.combo = 0;
+    this._fallAccum = 0;   // zera acumuladores de queda da coluna anterior
+    this._softAccum = 0;
     return column;
   }
 
@@ -178,12 +210,18 @@ export class Board {
     return Math.max(COLUMN.MIN_FALL_INTERVAL, speed);
   }
 
-  /** Soft drop: desce mais rápido enquanto segura ↓. */
+  /** Soft drop: desce rápido enquanto segura ↓ (passo a cada intervalo×MULT). */
   softDrop(dt) {
     if (!this.falling || this.landing || this.resolving) return [];
     const events = [];
-    const amount = Math.max(0.05, dt / Math.max(0.05, COLUMN.SOFT_DROP_MULT));
-    for (let i = 0; i < Math.min(8, amount); i++) {
+    // Acumula o tempo real e desce 1 célula a cada SOFT_DROP_MULT do
+    // intervalo de queda — velocidade bem definida (~30 células/s no
+    // nível 1 com MULT 0.06), independente da taxa de repeat do teclado.
+    const stepEvery = Math.max(0.02, this._fallInterval() * COLUMN.SOFT_DROP_MULT);
+    this._softAccum = (this._softAccum ?? 0) + dt;
+    let guard = 0;
+    while (this._softAccum >= stepEvery && guard++ < 12) {
+      this._softAccum -= stepEvery;
       if (this.landing) break;
       this._stepFalling(events);
     }
@@ -194,7 +232,7 @@ export class Board {
   hardDrop() {
     if (!this.falling || this.landing || this.resolving) return [];
     const events = [];
-    // Guard generoso: spawn acima do topo (startY=-3) até o fundo (rows-1)
+    // Guard generoso: do spawn (COLUMN.SPAWN_Y) até o fundo (rows-1)
     let guard = 0;
     const maxSteps = this.rows + 4;
     while (!this.landing && guard++ < maxSteps) {
