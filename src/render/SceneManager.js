@@ -61,8 +61,8 @@ export function init(container) {
   const rim = new THREE.PointLight(0x7b2fff, RENDER.RIM_LIGHT_INTENSITY, 45, 2.0);
   rim.position.set(0, 2, -8);
 
-  // Low cyan ambient — DESIGN accent-cyan tint, very subtle.
-  const ambient = new THREE.AmbientLight(0x00d2ff, RENDER.AMBIENT_INTENSITY);
+  // Low violet ambient — luz ambiente suave (anti-slop: não tint cyan em tudo)
+  const ambient = new THREE.AmbientLight(0x8f8fd8, RENDER.AMBIENT_INTENSITY);
 
   // Soft spotlight frontal — foca o tabuleiro (centro do board brilha,
   // bordas caem), look "holofote de palco" dos match-3 modernos.

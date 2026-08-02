@@ -105,8 +105,8 @@ function makeGridTexture() {
     }
   }
 
-  // --- grid lines (cyan tint) --------------------------------------
-  ctx.strokeStyle = 'rgba(0,210,255,0.10)';
+  // --- grid lines (neutras, quase invisíveis — as gems são o herói) ------
+  ctx.strokeStyle = 'rgba(160,180,220,0.07)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i <= COLS; i++) {
@@ -121,10 +121,17 @@ function makeGridTexture() {
   }
   ctx.stroke();
 
-  // --- borda externa (cyan, mais forte) ----------------------------
-  ctx.strokeStyle = 'rgba(0,210,255,0.35)';
-  ctx.lineWidth = 4;
+  // --- borda externa (violeta profundo sutil — NÃO neon cyan gritante) --
+  // Taste: cyan neon em todo o board = cliché AI slop. Uma borda escura
+  // com leve brilho violeta ancora o board sem competir com as gems.
+  ctx.strokeStyle = 'rgba(124,72,255,0.28)';
+  ctx.lineWidth = 3;
   roundRectPath(ctx, 6, 6, size - 12, size - 12, 22);
+  ctx.stroke();
+  // linha interna mais fina, brilho sutil
+  ctx.strokeStyle = 'rgba(0,210,255,0.10)';
+  ctx.lineWidth = 1.5;
+  roundRectPath(ctx, 12, 12, size - 24, size - 24, 18);
   ctx.stroke();
 
   const tex = new THREE.CanvasTexture(canvas);
@@ -147,12 +154,12 @@ export class BoardMesh {
     this._boardGroup = new THREE.Group();
     this._boardGroup.position.set(0, RENDER.CAMERA_LOOKAT[1], 0); // visible band center
 
-    // halo de luz radial atrás do tabuleiro (backdrop glow)
+    // halo de luz radial atrás do tabuleiro (backdrop glow — sutil, violeta)
     const backdropMat = new THREE.MeshBasicMaterial({
       map: makeBackdropTexture(),
-      color: 0x00d2ff,
+      color: 0x6c5ce7, // violeta profundo, não cyan
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.32,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -193,11 +200,11 @@ export class BoardMesh {
 
     scene.add(this._boardGroup);
 
-    // --- cell highlight (hover) --------------------------------------
+    // --- cell highlight (hover) — branco azulado suave, não cyan neon ---
     this._highlight = new THREE.Mesh(
       new THREE.PlaneGeometry(GAP * 0.98, GAP * 0.98),
       new THREE.MeshBasicMaterial({
-        color: 0x00d2ff,
+        color: 0x9fb8e8,
         transparent: true,
         opacity: 0,
         depthWrite: false,
@@ -208,10 +215,10 @@ export class BoardMesh {
     this._highlight.visible = false;
     scene.add(this._highlight);
 
-    // --- column highlight beam (coluna ativa que cai) ----------------
+    // --- column highlight beam (coluna ativa) — violeta suave, não cyan ---
     const beamMat = new THREE.MeshBasicMaterial({
       map: makeBeamTexture(),
-      color: 0x00d2ff,
+      color: 0x8a7cff,
       transparent: true,
       opacity: 0,
       depthWrite: false,
@@ -237,7 +244,7 @@ export class BoardMesh {
     this._ghostLine = new THREE.Mesh(
       new THREE.PlaneGeometry(GAP * 1.08, 0.05),
       new THREE.MeshBasicMaterial({
-        color: 0x00d2ff,
+        color: 0x9fb8e8,
         transparent: true,
         opacity: 0,
         depthWrite: false,
