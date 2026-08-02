@@ -6,7 +6,10 @@
 //         silhouettes mapped per color (round / diamond / rounded-
 //         square) so each gem reads by shape AND color. Strong dark
 //         edge shading via vertexColors tintFacets (dark facets
-//         darker, light facets lighter) = outlined cartoon jewel.
+//         darker, light facets lighter) + a bold dark outline mesh
+//         (scaled-up BackSide clone, #1A120B) = the classic flat
+//         cartoon inked look. No gloss — matte body, outline carries
+//         the silhouette.
 //         Selected: elevate +Y, scale 1.15, animated ring.
 //         Match flash: emissive pulses 3× then explodes.
 //         All motion uses exponential/overshoot easing — never linear.
@@ -17,6 +20,7 @@ import { GEM_DEFS, TUNING } from '../config.js';
 import {
   createGemMaterial,
   createCoreMaterial,
+  createOutlineMaterial,
   createRingMaterial,
   makeGlowTexture,
   toColor,
@@ -68,6 +72,7 @@ const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
+const OUTLINE_SCALE = 1.08; // bold ink outline (1.06..1.10 per contract)
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
@@ -95,12 +100,15 @@ function tintFacets(geometry) {
     const len = Math.hypot(nx, ny, nz) || 1;
     nx /= len; ny /= len; nz /= len;
     // Cartoon key: top faces (normal.y > 0) catch key light → very
-    // light. Down faces sink near-black; side faces mid-dark. Wide
+    // light. Down faces sink near-dark; side faces mid-dark. Wide
     // spread = strong edge/outline read on every silhouette.
+    // Contrast STRENGTHENED (contract TASK 2): up 0.7 / side 0.2 /
+    // down −0.05 → range ~0.45..1.2 (was ~0.56..1.12) — down faces
+    // near-black, top faces pop = "inked" cartoon jewel.
     const up = Math.max(0, ny);
     const down = Math.max(0, -ny);
     const side = Math.abs(nx) * 0.5 + Math.abs(nz) * 0.5;
-    const b = 0.5 + up * 0.62 + side * 0.18 + down * 0.06; // ~0.56..1.12
+    const b = 0.5 + up * 0.7 + side * 0.2 - down * 0.05; // ~0.45..1.2
     for (let k = 0; k < 3; k++) {
       colors[(i + k) * 3] = b;
       colors[(i + k) * 3 + 1] = b;
@@ -237,8 +245,22 @@ export function create(colorIndex, position, opts = {}) {
   const bodyGeo = getBodyGeometry(shape);
   const body = new THREE.Mesh(bodyGeo, bodyMat);
 
+  // Bold ink outline (contract TASK 2) — classic cartoon trick: a
+  // slightly scaled-up clone of the SAME body geometry rendered with
+  // BackSide + flat dark #1A120B. The far-side back faces poke out
+  // around the silhouette and read as a thick dark outline around
+  // every shape (hexagon/square/emerald/pear/brilliant/sphere).
+  // Added to the GROUP (child of the gem, not the scene) so it
+  // follows the gem's pop-in / selection / flash scale automatically;
+  // rotation.y is synced to the body in tick() so the outline hugs
+  // the silhouette as the gem idles.
+  const outline = new THREE.Mesh(bodyGeo.clone(), createOutlineMaterial());
+  outline.scale.setScalar(OUTLINE_SCALE);
+
   // Inner highlight — opaque heart rendered in the opaque pass, seen
-  // through the lightly-transmissive shell (Columns "highlight interno").
+  // through the slightly-translucent flat shell (Columns "highlight
+  // interno"). FLAT cartoon: the heart is a crisp painted core, no
+  // refraction (shell opacity 0.88, transmission 0).
   // Scaled per shape so it follows the silhouette.
   const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), coreMat);
   core.rotation.y = Math.PI / 4;
@@ -287,7 +309,7 @@ export function create(colorIndex, position, opts = {}) {
   sparkle.position.set(0.28, 0.28, 0.1);
   sparkle.userData.phase = Math.random() * Math.PI * 2; // dessincroniza os sparkles
 
-  group.add(body, core, glow, ring, sparkle);
+  group.add(outline, body, core, glow, ring, sparkle);
 
   const start = {
     x: position.x,
@@ -305,6 +327,7 @@ export function create(colorIndex, position, opts = {}) {
     z: position.z,
     body,
     core,
+    outline,
     glow,
     ring,
     sparkle,
@@ -444,6 +467,9 @@ function tick(dt, time) {
     u.body.rotation.y += dt * IDLE_ROT_SPEED;
     u.core.rotation.y -= dt * IDLE_ROT_SPEED * 0.6;
   }
+  // outline hugs the body silhouette as the gem idles (same geometry,
+  // same axis) — under reduced motion neither rotates, still aligned.
+  u.outline.rotation.y = u.body.rotation.y;
   const bob = Math.sin(time * 1.6 + u.base.x * 2.1) * 0.012;
   group.position.y += bob;
 

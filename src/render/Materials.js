@@ -2,9 +2,11 @@
 // Match-3D.js — Materials.js
 // PBR materials for the CARTOON ARCADE gem aesthetic.
 // Contract: Materials.createGemMaterial(colorIndex) → THREE.MeshPhysicalMaterial
-// Design: cartoon candy jewels (Columns-classic) — saturated colors,
-//         strong dark edge shading via vertexColors tintFacets,
-//         light transmission/iridescence, glossy clearcoat.
+// Design: cartoon FLAT candy jewels (Columns-classic) — saturated colors,
+//         strong dark edge shading via vertexColors tintFacets, NO gloss
+//         (no transmission / iridescence / clearcoat) — the flat cartoon
+//         body pairs with the dark outline mesh (createOutlineMaterial)
+//         for the bold inked look. Roughness up = matte, not crystal.
 // ============================================================
 
 import * as THREE from 'three';
@@ -167,13 +169,19 @@ export function getEmissiveColor(colorIndex) {
 /**
  * createGemMaterial(colorIndex) → THREE.MeshPhysicalMaterial
  *
- * CARTOON ARCADE (Columns-classic) look per contract TASK 2:
+ * CARTOON ARCADE — FLAT (contract TASK 2):
  *  - saturated cartoon base color (from GEM_DEFS, already vivid)
  *  - strong dark edge shading via vertexColors tintFacets
  *    (dark facets darker, light facets lighter → outlined jewel)
- *  - transmission/iridescence kept LIGHT (cartoon candy, not
- *    crystal-simulation): a hint of inner depth, no glassy refraction
- *  - clearcoat 1.0 → glossy candy highlight
+ *  - FLAT: NO transmission, NO iridescence, NO clearcoat, specular
+ *    barely present, roughness up (0.5) → matte cartoon candy, NOT a
+ *    polished 3D crystal. The bold ink look comes from the separate
+ *    dark outline mesh (createOutlineMaterial), not from gloss.
+ *  - envMapIntensity kept modest — a whisper of depth, no mirror shine
+ *  - body is a flat TRANSLUCENT shell (opacity 0.88, no transmission):
+ *    mostly-opaque painted cartoon color, with just enough see-through
+ *    for the inner highlight heart to read — the same ~12% show-through
+ *    the old transmission gave, but flat (no refraction distortion).
  *  - flatShading → faceted, not plastic-smooth
  *
  * Returns a FRESH material every call so per-gem match-flash emissive
@@ -188,18 +196,20 @@ export function createGemMaterial(colorIndex) {
     color: base,
     emissive: new THREE.Color(def[2]),
     emissiveIntensity: 0.22, // glow interno presente mas discreto (não lava com bloom)
-    roughness: 0.22, // candy gloss — NÃO vidro polido
+    roughness: 0.5, // flat cartoon — matte, sem candy gloss
     metalness: 0.0,
-    transmission: 0.12, // leve: só um hint de profundidade interna (cartoon, não cristal)
+    transmission: 0.0, // FLAT: sem vidro/refração — corpo opaco
+    transparent: true, // shell levemente translúcido p/ o coração interno
+    opacity: 0.88,     // aparece o heart (~12% see-through, flat, sem refração)
     thickness: 1.0,
     ior: 1.45,
-    iridescence: 0.12, // sutil — sem arco-íris de cristal
+    iridescence: 0.0, // FLAT: sem arco-íris de cristal
     iridescenceIOR: 1.3,
-    clearcoat: 1.0,
+    clearcoat: 0.0, // FLAT: sem camada brilhante
     clearcoatRoughness: 0.18,
-    specularIntensity: 1.0,
+    specularIntensity: 0.3, // FLAT: só um toque de luz especular
     specularColor: new THREE.Color(def[3]),
-    envMapIntensity: 0.9, // reflexos do RoomEnvironment contidos (cartoon)
+    envMapIntensity: 0.4, // modesto — profundidade sem espelho
     vertexColors: true,   // usa tintFacets (contorno escuro garantido)
     flatShading: true,
   });
@@ -208,8 +218,9 @@ export function createGemMaterial(colorIndex) {
 /**
  * Opaque "inner fire" core material for the gem's center stone.
  * CARTOON: reads as the "highlight interno" of classic Columns gems —
- * a bright saturated heart visible through the lightly-transmissive
- * shell (opaque pass → transmissive shell captures it).
+ * a bright saturated heart inside the opaque flat shell. FLAT per
+ * contract TASK 2: rougher + no clearcoat/iridescence so it stays a
+ * solid painted heart, not a glossy droplet.
  */
 export function createCoreMaterial(colorIndex) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
@@ -217,16 +228,35 @@ export function createCoreMaterial(colorIndex) {
     color: new THREE.Color(def[1]),
     emissive: new THREE.Color(def[2]),
     emissiveIntensity: 0.7, // coração brilhante — highlight interno cartoon
-    roughness: 0.15,
+    roughness: 0.45, // flat — sem brilho de gota
     metalness: 0.0,
     transmission: 0.0,
-    iridescence: 0.2,
-    clearcoat: 1.0,
+    iridescence: 0.0, // flat
+    clearcoat: 0.0,   // flat
     clearcoatRoughness: 0.1,
-    specularIntensity: 1.0,
+    specularIntensity: 0.3, // flat
     specularColor: new THREE.Color(def[3]),
     flatShading: true,
   });
+}
+
+/**
+ * Shared bold ink outline material for cartoon gems (contract TASK 2).
+ * Classic cartoon trick: a slightly scaled-up clone of the body
+ * geometry rendered with BackSide + flat dark color (#1A120B) — the
+ * far-side back faces poke out around the silhouette and read as a
+ * thick dark outline. Shared singleton: color never changes, so one
+ * material is safe for every gem (flash only touches body/core
+ * emissive, never this).
+ */
+let _outlineMaterial = null;
+export function createOutlineMaterial() {
+  if (_outlineMaterial) return _outlineMaterial;
+  _outlineMaterial = new THREE.MeshBasicMaterial({
+    color: 0x1a120b, // #1A120B — bold ink outline
+    side: THREE.BackSide,
+  });
+  return _outlineMaterial;
 }
 
 /**
