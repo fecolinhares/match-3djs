@@ -38,7 +38,7 @@ const FALLING_SCALE = 1.22;
 // Auto-derived from BOARD: VISIBLE_START = ROWS - VISIBLE_ROWS.
 const VISIBLE_START = ROWS - VISIBLE_ROWS; // 4
 const VISIBLE_MID = VISIBLE_START + (VISIBLE_ROWS - 1) / 2; // 9.5
-const Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1]; // 9.14
+const Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0);
 const X_OFFSET = -((COLS - 1) / 2) * GAP;
 
 function cellToWorld(x, y) {
@@ -117,7 +117,7 @@ function makeGridTexture() {
   }
 
   // --- grid lines gray-blue FINAS (visíveis mas discretas) -----------
-  ctx.strokeStyle = 'rgba(148,170,210,0.20)';
+  ctx.strokeStyle = 'rgba(170,190,225,0.30)';  // era 0.20 — grid sumia (vision)
   ctx.lineWidth = 1.5;
   ctx.beginPath();
   for (let i = 0; i <= COLS; i++) {
@@ -287,7 +287,10 @@ export class BoardMesh {
     const boardW = COLS * GAP;
     const boardH = VISIBLE_ROWS * GAP;
     this._boardGroup = new THREE.Group();
-    this._boardGroup.position.set(0, RENDER.CAMERA_LOOKAT[1], 0); // visible band center
+    // Enquadramento vertical via BOARD_Y_OFFSET (boardGroup E gems usam o
+    // mesmo offset — alinhamento preservado). Board desce na tela para o
+    // HUD DOM ter espaço próprio no topo.
+    this._boardGroup.position.set(0, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), 0); // visible band center
 
     // halo quente atrás do tabuleiro (backdrop glow âmbar/gold — arcade,
     // não neon violeta). Com a placa escura opaca na frente, vira um anel
@@ -570,7 +573,7 @@ export class BoardMesh {
     this._beam.visible = Boolean(this._previewColors);
     if (this._beam.visible) {
       const p = cellToWorld(x, VISIBLE_MID);
-      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1], -0.45);
+      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), -0.45);
     }
   }
 
@@ -608,7 +611,7 @@ export class BoardMesh {
     this._fallingGroup.visible = true;
     // beam centralizado na coluna ativa
     this._beam.visible = true;
-    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1], -0.45);
+    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), -0.45);
   }
 
   /** Rotate the falling column (radians) — eased in update(). */
