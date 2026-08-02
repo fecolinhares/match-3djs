@@ -2,8 +2,11 @@
 // Match-3D.js — GemMesh.js
 // Contract: GemMesh.create(colorIndex, position) → THREE.Group
 //           (faceted gem mesh + glow sprite + selection ring).
-// Design: real precious stone — octahedron crown + opaque "inner fire"
-//         core (so the transmissive shell truly refracts it) + glow.
+// Design: CARTOON ARCADE (Columns-classic) — THREE distinct
+//         silhouettes mapped per color (round / diamond / rounded-
+//         square) so each gem reads by shape AND color. Strong dark
+//         edge shading via vertexColors tintFacets (dark facets
+//         darker, light facets lighter) = outlined cartoon jewel.
 //         Selected: elevate +Y, scale 1.15, animated ring.
 //         Match flash: emissive pulses 3× then explodes.
 //         All motion uses exponential/overshoot easing — never linear.
@@ -69,14 +72,16 @@ const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
 // from its normal orientation (up faces lighter, down faces darker).
-// Gives guaranteed cut-stone contrast independent of envMap/GPU.
+// CARTOON: contrast is STRONG on purpose — dark facets sink toward
+// near-black, light facets pop — so gems read as outlined cartoon
+// jewels (Columns-classic) instead of neon glass. GPU-independent.
 // ------------------------------------------------------------
 function tintFacets(geometry) {
   const pos = geometry.attributes.position;
   const count = pos.count;
   const colors = new Float32Array(count * 3);
-  // OctahedronGeometry detail 1: faces are triangles; compute per-face
-  // normal by averaging the 3 vertices of each triangle.
+  // All body geometries are non-indexed triangle soup; compute each
+  // face normal by averaging the 3 vertices of the triangle.
   for (let i = 0; i < count; i += 3) {
     const ax = pos.getX(i), ay = pos.getY(i), az = pos.getZ(i);
     const bx = pos.getX(i + 1), by = pos.getY(i + 1), bz = pos.getZ(i + 1);
@@ -89,11 +94,13 @@ function tintFacets(geometry) {
     let nz = ux * vy - uy * vx;
     const len = Math.hypot(nx, ny, nz) || 1;
     nx /= len; ny /= len; nz /= len;
-    // Brightness: top faces (normal.y > 0) catch key light → lighter.
-    // Diagonal faces get mid tone; bottom faces darker.
+    // Cartoon key: top faces (normal.y > 0) catch key light → very
+    // light. Down faces sink near-black; side faces mid-dark. Wide
+    // spread = strong edge/outline read on every silhouette.
     const up = Math.max(0, ny);
-    const side = Math.max(0, -ny) * 0.35 + Math.abs(nx) * 0.18 + Math.abs(nz) * 0.12;
-    const b = 0.78 + up * 0.38 + side * 0.25; // ~0.78..1.16
+    const down = Math.max(0, -ny);
+    const side = Math.abs(nx) * 0.5 + Math.abs(nz) * 0.5;
+    const b = 0.5 + up * 0.62 + side * 0.18 + down * 0.06; // ~0.56..1.12
     for (let k = 0; k < 3; k++) {
       colors[(i + k) * 3] = b;
       colors[(i + k) * 3 + 1] = b;
@@ -101,6 +108,76 @@ function tintFacets(geometry) {
     }
   }
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+// ------------------------------------------------------------
+// Per-color silhouettes (Columns-classic). THREE distinct shapes:
+//   round   — smooth faceted ball (IcosahedronGeometry d2)
+//   diamond — octahedron stretched vertically (tall lozenge)
+//   square  — rounded-square block (extruded rounded rect + bevel)
+// All non-indexed triangle soup → tintFacets tints per face.
+// ------------------------------------------------------------
+function buildBodyGeometry(shape) {
+  switch (shape) {
+    case 'diamond': {
+      const geo = new THREE.OctahedronGeometry(0.46, 0);
+      geo.scale(0.9, 1.45, 0.85); // losango vertical: alto, levemente fino
+      return geo;
+    }
+    case 'square': {
+      // Rounded-square face extruded into a block with beveled edges.
+      const half = 0.38;
+      const corner = 0.15;
+      const s = new THREE.Shape();
+      s.moveTo(-half + corner, -half);
+      s.lineTo(half - corner, -half);
+      s.quadraticCurveTo(half, -half, half, -half + corner);
+      s.lineTo(half, half - corner);
+      s.quadraticCurveTo(half, half, half - corner, half);
+      s.lineTo(-half + corner, half);
+      s.quadraticCurveTo(-half, half, -half, half - corner);
+      s.lineTo(-half, -half + corner);
+      s.quadraticCurveTo(-half, -half, -half + corner, -half);
+      const geo = new THREE.ExtrudeGeometry(s, {
+        depth: 0.52,
+        bevelEnabled: true,
+        bevelThickness: 0.12,
+        bevelSize: 0.1,
+        bevelSegments: 3,
+        curveSegments: 8,
+      });
+      geo.translate(0, 0, -0.32); // centra no eixo Z (0.52/2 + 0.12)
+      return geo;
+    }
+    case 'round':
+    default: {
+      // Bola facetada suave — icosaedro d2 (80 faces) = ball cartoon
+      // com shading de faceta por vértice (sem vidro).
+      return new THREE.IcosahedronGeometry(0.48, 2);
+    }
+  }
+}
+
+/** Per-shape scale for the inner "highlight" core. */
+function coreScaleFor(shape) {
+  switch (shape) {
+    case 'diamond': return [0.85, 1.3, 0.8];
+    case 'square': return [0.95, 0.95, 0.75];
+    default: return [1, 1, 1];
+  }
+}
+
+// Geometry cache: build + tint once per shape, clone per gem (clone
+// copies the color attribute, so per-gem mutation is safe).
+const _bodyGeoCache = new Map();
+function getBodyGeometry(shape) {
+  let geo = _bodyGeoCache.get(shape);
+  if (!geo) {
+    geo = buildBodyGeometry(shape);
+    tintFacets(geo);
+    _bodyGeoCache.set(shape, geo);
+  }
+  return geo.clone();
 }
 
 // ------------------------------------------------------------
@@ -118,21 +195,23 @@ export function create(colorIndex, position, opts = {}) {
   const bodyMat = createGemMaterial(colorIndex);
   const coreMat = createCoreMaterial(colorIndex);
 
-  // Faceted crown — octahedron detail 1 + flat shading = cut stone.
-  // Vertex colors por face: cada face recebe um tom ligeiramente diferente
-  // baseado na orientação da normal (faces viradas pra cima = mais claras,
-  // pra baixo = mais escuras). Isso GARANTE contraste de faceta mesmo sem
-  // envMap/transmission — o look de pedra lapidada independe da GPU.
-  const bodyGeo = new THREE.OctahedronGeometry(0.46, 1);
-  tintFacets(bodyGeo);
+  // Cartoon body — shape fixed per color (round / diamond / square):
+  // silhouette + saturated color both carry identity. Vertex colors per
+  // face: faces turned up get light tones, down/side faces get dark —
+  // strong dark-edge shading that reads as an outlined cartoon jewel
+  // independent of envMap/GPU.
+  const shape = def[4] || 'round';
+  const bodyGeo = getBodyGeometry(shape);
   const body = new THREE.Mesh(bodyGeo, bodyMat);
 
-  // Inner fire — opaque octahedron rotated 45°, smaller. Rendered into
-  // the opaque pass, so the transmissive shell refracts it: real depth.
-  const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.24, 0), coreMat);
+  // Inner highlight — opaque heart rendered in the opaque pass, seen
+  // through the lightly-transmissive shell (Columns "highlight interno").
+  // Scaled per shape so it follows the silhouette.
+  const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.26, 0), coreMat);
   core.rotation.y = Math.PI / 4;
   core.rotation.x = 0.3;
-  core.scale.setScalar(1.05);
+  const cs = coreScaleFor(shape);
+  core.scale.set(cs[0] * 1.05, cs[1] * 1.05, cs[2] * 1.05);
 
   // Glow sprite behind the stone — SUTIL para gems assentadas.
   // Falling gems (glowBoost) ganham glow UM POUCO maior, mas NÃO
@@ -357,11 +436,11 @@ function tick(dt, time) {
   }
 
   // --- materials (flash) ------------------------------------------------
-  // Flash contido: multiplicador menor para não estourar emissive/glow
-  // (antes 2.6 no pico → core 0.55*3.6=1.98 + glow 1.72 = brilho branco cegante)
+  // Flash contido: multiplicador menor para não estourar emissive/glow.
+  // Bases: body 0.22 / core 0.7 (cartoon) — pico ~×2.6 sem washout.
   if (u.flashT >= 0 || flashEmissive !== 1) {
-    u.body.material.emissiveIntensity = 0.28 * flashEmissive;
-    u.core.material.emissiveIntensity = 0.42 * flashEmissive;
+    u.body.material.emissiveIntensity = 0.22 * flashEmissive;
+    u.core.material.emissiveIntensity = 0.7 * flashEmissive;
     u.glow.material.opacity = 0.18 + 0.3 * (flashEmissive - 1);
   }
 }

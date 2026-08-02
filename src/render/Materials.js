@@ -1,9 +1,10 @@
 // ============================================================
 // Match-3D.js — Materials.js
-// PBR materials for the premium gem aesthetic.
+// PBR materials for the CARTOON ARCADE gem aesthetic.
 // Contract: Materials.createGemMaterial(colorIndex) → THREE.MeshPhysicalMaterial
-// Design: real precious stones — transmission (refraction), iridescence,
-//         clearcoat, per-color emissive/specular from GEM_DEFS.
+// Design: cartoon candy jewels (Columns-classic) — saturated colors,
+//         strong dark edge shading via vertexColors tintFacets,
+//         light transmission/iridescence, glossy clearcoat.
 // ============================================================
 
 import * as THREE from 'three';
@@ -166,12 +167,13 @@ export function getEmissiveColor(colorIndex) {
 /**
  * createGemMaterial(colorIndex) → THREE.MeshPhysicalMaterial
  *
- * Premium stone look per DESIGN.md §5:
- *  - roughness 0.1, metalness 0.0  (glass, not metal)
- *  - transmission 0.6 + ior/thickness → refractive depth
- *  - iridescence 0.5 → subtle rainbow sheen
- *  - emissive = GEM_DEFS emissive at low intensity (inner glow)
- *  - clearcoat 1.0, high specularIntensity, specular tinted by GEM_DEFS
+ * CARTOON ARCADE (Columns-classic) look per contract TASK 2:
+ *  - saturated cartoon base color (from GEM_DEFS, already vivid)
+ *  - strong dark edge shading via vertexColors tintFacets
+ *    (dark facets darker, light facets lighter → outlined jewel)
+ *  - transmission/iridescence kept LIGHT (cartoon candy, not
+ *    crystal-simulation): a hint of inner depth, no glassy refraction
+ *  - clearcoat 1.0 → glossy candy highlight
  *  - flatShading → faceted, not plastic-smooth
  *
  * Returns a FRESH material every call so per-gem match-flash emissive
@@ -181,46 +183,47 @@ export function createGemMaterial(colorIndex) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   // Satura a cor base um pouco (multiply) — gems mais ricas/vivas, como Bejeweled.
   const base = new THREE.Color(def[1]);
-  base.offsetHSL(0, 0.08, 0); // +8% saturação
+  base.offsetHSL(0, 0.04, 0); // +4% saturação (defs já são cartoon-saturadas)
   return new THREE.MeshPhysicalMaterial({
     color: base,
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.28, // glow interno presente mas discreto (não lava com bloom)
-    roughness: 0.12,
+    emissiveIntensity: 0.22, // glow interno presente mas discreto (não lava com bloom)
+    roughness: 0.22, // candy gloss — NÃO vidro polido
     metalness: 0.0,
-    transmission: 0.35, // moderado — refração quando GPU suporta; sem depender dela
-    thickness: 1.4,
-    ior: 1.55,
-    iridescence: 0.55,
+    transmission: 0.12, // leve: só um hint de profundidade interna (cartoon, não cristal)
+    thickness: 1.0,
+    ior: 1.45,
+    iridescence: 0.12, // sutil — sem arco-íris de cristal
     iridescenceIOR: 1.3,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.1,
-    specularIntensity: 1.6, // era 2.2 — white gems estouravam (vision)
+    clearcoatRoughness: 0.18,
+    specularIntensity: 1.0,
     specularColor: new THREE.Color(def[3]),
-    envMapIntensity: 1.2, // reflexos do RoomEnvironment (reduzido de 1.5)
-    vertexColors: true,   // usa tintFacets (contraste de faceta garantido)
+    envMapIntensity: 0.9, // reflexos do RoomEnvironment contidos (cartoon)
+    vertexColors: true,   // usa tintFacets (contorno escuro garantido)
     flatShading: true,
   });
 }
 
 /**
  * Opaque "inner fire" core material for the gem's center stone.
- * Opaque on purpose: it lands in the opaque pass, so the transmissive
- * shell genuinely refracts it — real gem depth instead of a decal.
+ * CARTOON: reads as the "highlight interno" of classic Columns gems —
+ * a bright saturated heart visible through the lightly-transmissive
+ * shell (opaque pass → transmissive shell captures it).
  */
 export function createCoreMaterial(colorIndex) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(def[1]),
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.55,
-    roughness: 0.06,
+    emissiveIntensity: 0.7, // coração brilhante — highlight interno cartoon
+    roughness: 0.15,
     metalness: 0.0,
     transmission: 0.0,
-    iridescence: 0.3,
+    iridescence: 0.2,
     clearcoat: 1.0,
     clearcoatRoughness: 0.1,
-    specularIntensity: 1.2,
+    specularIntensity: 1.0,
     specularColor: new THREE.Color(def[3]),
     flatShading: true,
   });
