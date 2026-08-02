@@ -388,14 +388,22 @@ export class BoardMesh {
     scene.add(this._beam);
 
     // --- ghost landing preview ------------------------------------------
+    // Ghost reflete as MESMAS formas das gems reais (hexagon/square/
+    // emerald/pear/brilliant/sphere) — cada ghost gem usa a geometria da
+    // cor correspondente + edges dashed brancos = holograma inequívoco.
     this._ghostGroup = new THREE.Group();
     this._ghostGroup.visible = false;
     this._ghostGems = [];
-    const ghostGeo = new THREE.OctahedronGeometry(0.42, 0);
+    this._ghostEdges = [];
     for (let i = 0; i < 3; i++) {
-      const m = new THREE.Mesh(ghostGeo, null);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.01, 0.01), null);
+      m.visible = false; // geometria real entra no _updateGhosts
       this._ghostGems.push(m);
       this._ghostGroup.add(m);
+      const edges = new THREE.LineSegments(new THREE.BufferGeometry(), null);
+      edges.visible = false;
+      this._ghostEdges.push(edges);
+      this._ghostGroup.add(edges);
     }
     scene.add(this._ghostGroup);
     // linha de pouso — marca a linha onde a coluna vai assentar
@@ -728,6 +736,10 @@ export class BoardMesh {
         m.scale.setScalar(s);
         m.material.opacity = (reduced ? 0.45 : 0.4 + 0.25 * p);
       }
+      for (const e of this._ghostEdges) {
+        e.scale.setScalar(1.06 * s);
+        e.material.opacity = (reduced ? 0.7 : 0.85 + 0.15 * p);
+      }
       this._ghostLine.material.opacity = (reduced ? 0.4 : 0.4 + 0.3 * p);
       this._ghostLine.scale.setScalar(1 + (reduced ? 0 : 0.12 * p));
     }
@@ -754,24 +766,61 @@ export class BoardMesh {
     this._ghostGroup.visible = true;
     for (let i = 0; i < 3; i++) {
       const m = this._ghostGems[i];
-      if (!m.material || m.material.userData.colorIndex !== this._previewColors[i]) {
-        const def = GEM_DEFS[this._previewColors[i]] ?? GEM_DEFS[GEM_DEFS.length - 1];
-        // Ghost: cor MUITO clara (mix 65% branco) + opacidade baixa =
-        // silhueta fantasma inconfundível, distinta da coluna real sólida.
+      const def = GEM_DEFS[this._previewColors[i]] ?? GEM_DEFS[GEM_DEFS.length - 1];
+      const shape = def[4] || 'sphere';
+      // geometria MESMA das gems reais (silhueta por cor) + material
+      // fantasma translúcido (cor clareada, opacity baixa)
+      if (!m.material || m.material.userData.colorIndex !== this._previewColors[i] || m.material.userData.shape !== shape) {
         const base = new THREE.Color(def[1]);
         const light = base.clone().lerp(new THREE.Color('#FFFFFF'), 0.65);
         const ghostMat = new THREE.MeshBasicMaterial({
           color: light,
           transparent: true,
-          opacity: 0.35,
+          opacity: 0.15,  // corpo quase invisível — edges dashed dominam
           depthWrite: false,
           blending: THREE.NormalBlending,
         });
         ghostMat.userData.colorIndex = this._previewColors[i];
+        ghostMat.userData.shape = shape;
         m.material = ghostMat;
+        m.geometry = GemMesh.buildBodyGeometry(shape);
+        m.visible = true;
+      }
+      // edges dashed brancos — holograma que diferencia do corpo sólido.
+      // Geometria do ghost usa detalhe MENOR (icosaedro d1, cilindro 6
+      // lados) → menos arestas → o padrão dashed fica legível (d2/faces
+      // densas pareciam preenchimento branco, não wireframe).
+      if (!this._ghostEdges[i].material || this._ghostEdges[i].userData.shape !== shape) {
+        const ghostShapeGeo = (() => {
+          switch (shape) {
+            case 'hexagon': return new THREE.CylinderGeometry(0.42, 0.42, 0.72, 6, 1).rotateX(Math.PI / 2);
+            case 'square': return new THREE.BoxGeometry(0.78, 0.78, 0.55);
+            case 'emerald': return new THREE.BoxGeometry(0.78, 0.5, 0.55);
+            case 'pear': return new THREE.ConeGeometry(0.44, 0.9, 6, 1);
+            case 'brilliant': return new THREE.OctahedronGeometry(0.46, 0);
+            default: return new THREE.IcosahedronGeometry(0.44, 1); // sphere d1 (menos arestas)
+          }
+        })();
+        this._ghostEdges[i].geometry = new THREE.EdgesGeometry(ghostShapeGeo, 15);
+        const dashed = new THREE.LineDashedMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.9,
+          depthWrite: false,
+          dashSize: 0.16,
+          gapSize: 0.12,
+        });
+        this._ghostEdges[i].material = dashed;
+        this._ghostEdges[i].userData.shape = shape;
+        this._ghostEdges[i].computeLineDistances();
+        this._ghostEdges[i].visible = true;
       }
       const p = cellToWorld(x, row0 - i); // base row0, gems sobem (i=0 base)
       m.position.set(p.x, p.y, p.z + 0.02);
+      if (this._ghostEdges[i]) {
+        this._ghostEdges[i].position.copy(m.position);
+        this._ghostEdges[i].scale.setScalar(1.06);
+      }
     }
     // linha de pouso na linha do ghost (base da coluna)
     const land = cellToWorld(x, row0);

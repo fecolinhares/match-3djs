@@ -72,7 +72,7 @@ const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
-const OUTLINE_SCALE = 1.10; // bold ink outline (vision: falling edges soft)
+const OUTLINE_SCALE = 1.16; // ink outline grosso (vision: outlines ainda soft)
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
@@ -129,7 +129,7 @@ function tintFacets(geometry) {
 //   brilliant — diamante brilliant-cut com ponta embaixo (bottom-left)
 //   sphere    — bola facetada (bottom-right)
 // ------------------------------------------------------------
-function buildBodyGeometry(shape) {
+export function buildBodyGeometry(shape) {
   switch (shape) {
     case 'hexagon': {
       // Prisma hexagonal: 6 lados, topo/base achatados, facetas nas faces.
@@ -256,6 +256,8 @@ export function create(colorIndex, position, opts = {}) {
   // the silhouette as the gem idles.
   const outline = new THREE.Mesh(bodyGeo.clone(), createOutlineMaterial());
   outline.scale.setScalar(OUTLINE_SCALE);
+  outline.renderOrder = -1; // renderiza antes do corpo (atrás), BackSide
+                            // aparece ao redor da silhueta = outline grosso
 
   // Inner highlight — opaque heart rendered in the opaque pass, seen
   // through the slightly-translucent flat shell (Columns "highlight
@@ -278,7 +280,7 @@ export function create(colorIndex, position, opts = {}) {
       map: makeGlowTexture(),
       color: new THREE.Color(def[2]),
       transparent: true,
-      opacity: glowBoost ? 0.32 : 0.18,
+      opacity: glowBoost ? 0.32 : 0.12,  // 0.18→0.12: glow suavizava outlines
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
