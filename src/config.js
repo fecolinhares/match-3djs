@@ -5,11 +5,12 @@
 
 export const BOARD = {
   COLS: 8,
-  ROWS: 16,          // total rows; top 4 são off-screen (spawn zone)
-  VISIBLE_ROWS: 12,  // rows visíveis no viewport (Columns classic: campo alto)
+  ROWS: 14,          // total rows; top rows são off-screen (spawn zone)
+  VISIBLE_ROWS: 10,  // rows visíveis (era 8; 12 deixava o board alto demais
+                     // p/ o HUD DOM ter espaço próprio — 10 é Columns-esque)
   VISIBLE_START: 4,  // primeira row visível (ROWS - VISIBLE_ROWS)
   CELL_SIZE: 1.0,
-  GAP: 1.12,         // espaçamento entre células (respiro visual)
+  GAP: 1.0,          // era 1.12 — board 12 rows alto demais p/ HUD + fundo caberem
   LAND_DELAY: 0.12,  // segundos antes de checar match após pousar (era 0.25 — jogador dropava durante o landing e era ignorado)
 };
 
@@ -32,20 +33,19 @@ export const COLUMN = {
 export const GEM_COLORS = 6; // 6 cores + wild (índice 6)
 
 // Cada cor: [nome, corBase, corEmissiva, corSpecular, forma]
-// Forma fixa por cor (Columns-classic): silhouette ajuda a distinguir
-// cores (acessibilidade!) — round/ball, diamond (losango vertical),
-// square (rounded-square block).
-// Cartoon arcade: matizes saturados com identidade de cor preservada,
-// NÃO o "rainbow puro" de IA. Frost Diamond é a mais clara mas não
-// branca pura — evita washout sob bloom.
+// Forma fixa por cor — reproduções EXATAS das 6 jóias da referência
+// (imagem do usuário): hexagonal (rubi), square-cut (safira),
+// emerald step-cut (esmeralda), pear apex-top (topázio),
+// brilliant ponta-embaixo (amatista), sphere (âmbar).
+// Silhouette distinta ajuda a reconhecer a cor (acessibilidade!).
 export const GEM_DEFS = [
-  ['Fire Ruby',    '#F02E4E', '#FF6A80', '#FFD6DC', 'round'],
-  ['Solar Topaz',  '#FF9F1C', '#FFC24D', '#FFE9BC', 'diamond'],
-  ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'square'],
-  ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'diamond'],
-  ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'round'],
-  ['Frost Diamond','#C9D3E2', '#94A2B8', '#FFFFFF', 'square'],
-  ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'diamond'],  // índice 6 — especial
+  ['Fire Ruby',    '#F02E4E', '#FF6A80', '#FFD6DC', 'hexagon'],   // rubi hexagonal (top-left)
+  ['Solar Topaz',  '#FF9F1C', '#FFC24D', '#FFE9BC', 'pear'],      // pêra apex-top (middle-right)
+  ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'emerald'],   // esmeralda step-cut (middle-left)
+  ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'square'],    // square-cut safira (top-right)
+  ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'brilliant'], // brilliant ponta-embaixo (bottom-left)
+  ['Frost Diamond','#C9D3E2', '#94A2B8', '#FFFFFF', 'sphere'],    // âmbar/bola facetada (bottom-right)
+  ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'brilliant'], // índice 6 — especial
 ];
 
 export const SCORING = {
@@ -59,8 +59,11 @@ export const SCORING = {
 export const RENDER = {
   PIXEL_RATIO: 2,
   FOV: 42,
-  CAMERA_POS: [0, 0, 16],
-  CAMERA_LOOKAT: [0, -1.5, 0],
+  CAMERA_POS: [0, 0, 26],  // z=26 — board 10 rows + HUD com presença Columns
+  CAMERA_LOOKAT: [0, 0, 0],  // câmera reta; board desce via BOARD_Y_OFFSET
+  // Board desce na tela (topo livre para o HUD DOM). Usado pelo boardGroup
+  // E pelo Y_OFFSET das gems — mover juntos mantém o alinhamento.
+  BOARD_Y_OFFSET: -2.6,
   BLOOM_STRENGTH: 0.28,
   BLOOM_RADIUS: 0.42,
   BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout

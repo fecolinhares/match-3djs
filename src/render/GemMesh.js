@@ -111,45 +111,75 @@ function tintFacets(geometry) {
 }
 
 // ------------------------------------------------------------
-// Per-color silhouettes (Columns-classic). THREE distinct shapes:
-//   round   — smooth faceted ball (IcosahedronGeometry d2)
-//   diamond — octahedron stretched vertically (tall lozenge)
-//   square  — rounded-square block (extruded rounded rect + bevel)
-// All non-indexed triangle soup → tintFacets tints per face.
+// Per-color silhouettes — EXACT 3D reproductions of the 6-gem
+// reference image (user-provided). Non-indexed triangle soup so
+// tintFacets tints per face.
+//   hexagon   — prisma hexagonal facetado (rubi da ref, top-left)
+//   square    — square-cut com bevel + interior estrelado (top-right)
+//   emerald   — retângulo horizontal step-cut (middle-left)
+//   pear      — pêra/triângulo com apex no topo (middle-right)
+//   brilliant — diamante brilliant-cut com ponta embaixo (bottom-left)
+//   sphere    — bola facetada (bottom-right)
 // ------------------------------------------------------------
 function buildBodyGeometry(shape) {
   switch (shape) {
-    case 'diamond': {
-      const geo = new THREE.OctahedronGeometry(0.46, 0);
-      geo.scale(0.9, 1.45, 0.85); // losango vertical: alto, levemente fino
+    case 'hexagon': {
+      // Prisma hexagonal: 6 lados, topo/base achatados, facetas nas faces.
+      const geo = new THREE.CylinderGeometry(0.5, 0.5, 0.8, 6, 1);
+      geo.rotateX(Math.PI / 2); // eixo Y → Z para assentar no tabuleiro
       return geo;
     }
     case 'square': {
-      // Rounded-square face extruded into a block with beveled edges.
-      const half = 0.38;
-      const corner = 0.15;
+      // Square-cut: cubo com cantos bevelados + facetas no topo (interior
+      // estrelado da ref) — caixa octogonal vista de cima.
+      const half = 0.42;
       const s = new THREE.Shape();
-      s.moveTo(-half + corner, -half);
-      s.lineTo(half - corner, -half);
-      s.quadraticCurveTo(half, -half, half, -half + corner);
-      s.lineTo(half, half - corner);
-      s.quadraticCurveTo(half, half, half - corner, half);
-      s.lineTo(-half + corner, half);
-      s.quadraticCurveTo(-half, half, -half, half - corner);
-      s.lineTo(-half, -half + corner);
-      s.quadraticCurveTo(-half, -half, -half + corner, -half);
+      // octógono: quadrado com 4 cantos cortados (beveled corners)
+      const c = 0.14;
+      s.moveTo(-half + c, -half);
+      s.lineTo(half - c, -half);
+      s.lineTo(half, -half + c);
+      s.lineTo(half, half - c);
+      s.lineTo(half - c, half);
+      s.lineTo(-half + c, half);
+      s.lineTo(-half, half - c);
+      s.lineTo(-half, -half + c);
+      s.closePath();
       const geo = new THREE.ExtrudeGeometry(s, {
-        depth: 0.52,
+        depth: 0.6,
         bevelEnabled: true,
         bevelThickness: 0.12,
         bevelSize: 0.1,
         bevelSegments: 3,
-        curveSegments: 8,
+        curveSegments: 4,
       });
-      geo.translate(0, 0, -0.32); // centra no eixo Z (0.52/2 + 0.12)
+      geo.translate(0, 0, -0.4); // centra
       return geo;
     }
-    case 'round':
+    case 'emerald': {
+      // Emerald-cut: retângulo horizontal com step-facets — prisma
+      // retangular com topo em degraus (borda espessa + painel central).
+      const w = 0.78; // largo
+      const h = 0.5;  // curto (horizontal)
+      const geo = new THREE.BoxGeometry(w, h, 0.6);
+      // inclina levemente para dar leitura de "painel central"
+      return geo;
+    }
+    case 'pear': {
+      // Pear/triangle: apex no topo, base larga e curva embaixo.
+      // Usa um cone com 4 lados + escala para parecer pêra/brilhante.
+      const geo = new THREE.ConeGeometry(0.5, 1.0, 8, 1);
+      geo.translate(0, 0.1, 0); // apex sobe, base desce
+      return geo;
+    }
+    case 'brilliant': {
+      // Brilliant-cut: octaedro esticado com ponta EMBBAIXO (borda superior
+      // larga, tip estreito). Usa OctahedronGeometry + escala forte em Y.
+      const geo = new THREE.OctahedronGeometry(0.5, 0);
+      geo.scale(1.05, 1.5, 1.0); // alto e estreito — ponta embaixo
+      return geo;
+    }
+    case 'sphere':
     default: {
       // Bola facetada suave — icosaedro d2 (80 faces) = ball cartoon
       // com shading de faceta por vértice (sem vidro).
@@ -161,8 +191,11 @@ function buildBodyGeometry(shape) {
 /** Per-shape scale for the inner "highlight" core. */
 function coreScaleFor(shape) {
   switch (shape) {
-    case 'diamond': return [0.85, 1.3, 0.8];
-    case 'square': return [0.95, 0.95, 0.75];
+    case 'hexagon': return [0.7, 0.8, 0.7];
+    case 'square': return [0.85, 0.85, 0.7];
+    case 'emerald': return [0.9, 0.75, 0.75];
+    case 'pear': return [0.8, 1.0, 0.8];
+    case 'brilliant': return [0.85, 1.25, 0.85];
     default: return [1, 1, 1];
   }
 }
@@ -200,7 +233,7 @@ export function create(colorIndex, position, opts = {}) {
   // face: faces turned up get light tones, down/side faces get dark —
   // strong dark-edge shading that reads as an outlined cartoon jewel
   // independent of envMap/GPU.
-  const shape = def[4] || 'round';
+  const shape = def[4] || 'sphere';
   const bodyGeo = getBodyGeometry(shape);
   const body = new THREE.Mesh(bodyGeo, bodyMat);
 
