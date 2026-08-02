@@ -1,0 +1,3 @@
+# Code Owners — define quem DEVE aprovar pull requests
+# Apenas o mantenedor do projeto pode aprovar merges na main.
+* @fecolinhares
