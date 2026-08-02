@@ -5,8 +5,11 @@
 //   highlightCell(x, y, on)
 //   showFallingColumnPreview(x, colors) / setFallingPosition(x, y)
 // Design: gems at (x * GAP, y * GAP) with the visible band centered
-//   on the camera look-at; premium board — cell fills with gradient,
-//   glowing rounded frame, radial backdrop, column highlight beam,
+//   on the camera look-at; CARTOON ARCADE board (Columns classic) —
+//   interior quase-preto navy com grid gray-blue fina, células com
+//   checkerboard escuro, frame em camadas (dark outline externo →
+//   pale gold/cream inner rim → brown/gold structural border com
+//   stone speckle), backdrop quente âmbar, column highlight beam,
 //   strong ghost landing preview, bold falling gems (scale boost +
 //   glow boost + trail). Elastic fall motion.
 //
@@ -22,7 +25,6 @@ import {
   makeGlowTexture,
   makeBeamTexture,
   makeBackdropTexture,
-  makeFrameTexture,
 } from './Materials.js';
 
 const { GAP, COLS, ROWS, VISIBLE_ROWS } = BOARD;
@@ -33,9 +35,10 @@ const FALLING_SCALE = 1.22;
 // Grid → world mapping. Logic y=0 is the TOP (spawn zone, off-screen);
 // 3D y grows upward, so we flip and offset so the visible band
 // (bottom VISIBLE_ROWS rows) centers on the camera look-at height.
+// Auto-derived from BOARD: VISIBLE_START = ROWS - VISIBLE_ROWS.
 const VISIBLE_START = ROWS - VISIBLE_ROWS; // 4
-const VISIBLE_MID = VISIBLE_START + (VISIBLE_ROWS - 1) / 2; // 7.5
-const Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1]; // 6.9
+const VISIBLE_MID = VISIBLE_START + (VISIBLE_ROWS - 1) / 2; // 9.5
+const Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1]; // 9.14
 const X_OFFSET = -((COLS - 1) / 2) * GAP;
 
 function cellToWorld(x, y) {
@@ -59,24 +62,26 @@ function roundRectPath(ctx, x, y, w, h, r) {
 }
 
 /**
- * Premium board surface texture:
- *  - cada célula com fill gradiente (slate profundo → levemente mais claro)
- *  - insets arredondados com bevel sutil (highlight topo / sombra base)
- *  - grid lines cyan-tinted, mais presentes (0.10)
- *  - borda externa cyan brilhante (0.35)
+ * Cartoon-arcade board surface texture (Columns classic):
+ *  - interior quase-preto navy (#0A0E1A), fills FLAT cartoon (não neon)
+ *  - checkerboard sutil e MAIS ESCURO (duas tonalidades de navy)
+ *  - bevel hard: highlight 1-2px no topo + sombra na base (cartoon)
+ *  - grid lines gray-blue FINAS entre as células
+ *  - sem borda neon — a moldura em camadas (makeCartoonFrameTexture)
+ *    cuida do contorno externo
  */
 function makeGridTexture() {
   const size = 1024;
   const stepX = size / COLS;
   const stepY = size / VISIBLE_ROWS;
   const cellInset = 4; // px — separa as células (inset look)
-  const radius = 14;
+  const radius = 10;
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
 
-  // --- cell fills (gradiente vertical por célula) -------------------
+  // --- cell fills: navy escuro, checker sutil, flat cartoon ----------
   for (let row = 0; row < VISIBLE_ROWS; row++) {
     for (let col = 0; col < COLS; col++) {
       const x = col * stepX + cellInset;
@@ -84,38 +89,36 @@ function makeGridTexture() {
       const w = stepX - cellInset * 2;
       const h = stepY - cellInset * 2;
 
-      // base: topo mais escuro, base levemente mais clara (luz vinda de cima)
-      // ANTI-SLOP: padrão xadrez sutil (par/ímpar) dá presença e ritmo ao board
+      // Cartoon arcade: quase-preto navy, só duas tonalidades (checker).
+      // Luz de cima: topo levemente mais claro, base mais escura (sutil).
       const checker = (row + col) % 2 === 0;
       const g = ctx.createLinearGradient(0, y, 0, y + h);
       if (checker) {
-        g.addColorStop(0.0, 'rgba(24,29,54,0.76)');
-        g.addColorStop(0.6, 'rgba(33,40,74,0.82)');
-        g.addColorStop(1.0, 'rgba(44,53,94,0.74)');
+        g.addColorStop(0.0, '#121830');
+        g.addColorStop(1.0, '#0E1426');
       } else {
-        g.addColorStop(0.0, 'rgba(20,24,44,0.72)');
-        g.addColorStop(0.6, 'rgba(28,34,62,0.78)');
-        g.addColorStop(1.0, 'rgba(38,46,82,0.70)');
+        g.addColorStop(0.0, '#0A0E1A');
+        g.addColorStop(1.0, '#080B15');
       }
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.fillStyle = g;
       ctx.fill();
 
-      // bevel: highlight sutil no topo (luz) + sombra na base
+      // bevel cartoon hard: highlight no topo + sombra na base
       ctx.save();
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.clip();
-      ctx.fillStyle = 'rgba(140,180,255,0.10)';
-      ctx.fillRect(x, y, w, 2.5);
-      ctx.fillStyle = 'rgba(0,0,0,0.28)';
-      ctx.fillRect(x, y + h - 3, w, 3);
+      ctx.fillStyle = 'rgba(150,175,230,0.10)';
+      ctx.fillRect(x, y, w, 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.40)';
+      ctx.fillRect(x, y + h - 2.5, w, 2.5);
       ctx.restore();
     }
   }
 
-  // --- grid lines (neutras, quase invisíveis — as gems são o herói) ------
-  ctx.strokeStyle = 'rgba(160,180,220,0.07)';
-  ctx.lineWidth = 2;
+  // --- grid lines gray-blue FINAS (visíveis mas discretas) -----------
+  ctx.strokeStyle = 'rgba(148,170,210,0.20)';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
   for (let i = 0; i <= COLS; i++) {
     const x = i * stepX + 0.5;
@@ -129,18 +132,142 @@ function makeGridTexture() {
   }
   ctx.stroke();
 
-  // --- borda externa (violeta profundo sutil — NÃO neon cyan gritante) --
-  // Taste: cyan neon em todo o board = cliché AI slop. Uma borda escura
-  // com leve brilho violeta ancora o board sem competir com as gems.
-  ctx.strokeStyle = 'rgba(124,72,255,0.28)';
-  ctx.lineWidth = 3;
-  roundRectPath(ctx, 6, 6, size - 12, size - 12, 22);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+/**
+ * Rounded-rect THREE.Shape centered at origin (for the dark outline plate).
+ */
+function roundedRectShape(width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  const x = -width / 2;
+  const y = -height / 2;
+  const shape = new THREE.Shape();
+  shape.moveTo(x + r, y);
+  shape.lineTo(x + width - r, y);
+  shape.quadraticCurveTo(x + width, y, x + width, y + r);
+  shape.lineTo(x + width, y + height - r);
+  shape.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  shape.lineTo(x + r, y + height);
+  shape.quadraticCurveTo(x, y + height, x, y + height - r);
+  shape.lineTo(x, y + r);
+  shape.quadraticCurveTo(x, y, x + r, y);
+  return shape;
+}
+
+/**
+ * Cartoon frame EM CAMADAS (Columns classic): dark outline externo →
+ * pale gold/cream inner rim → thicker brown/gold structural border com
+ * stone speckle + bevel chunky (highlight topo / sombra base).
+ * Center hole transparent — o grid aparece por dentro. O canvas é
+ * aspect-matched ao plano da moldura para a banda ter espessura
+ * uniforme em unidades de mundo (banda ~0.62 world de cada lado).
+ */
+function makeCartoonFrameTexture() {
+  const BAND = 0.62; // world units per side
+  const boardW = COLS * GAP;
+  const boardH = VISIBLE_ROWS * GAP;
+  const cw = 1024;
+  const ch = Math.max(2, Math.round(cw * (boardH + BAND * 2) / (boardW + BAND * 2)));
+  const canvas = document.createElement('canvas');
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext('2d');
+
+  // px por unidade de mundo é uniforme nos dois eixos (canvas aspect-matched)
+  const bandPx = BAND / (boardW + BAND * 2) * cw; // ≈62
+  const rOut = bandPx * 1.1;
+  const rIn = Math.max(4, rOut - bandPx * 0.72);
+
+  const outerPath = () => roundRectPath(ctx, 0, 0, cw, ch, rOut);
+  const holePath = () => roundRectPath(ctx, bandPx, bandPx, cw - bandPx * 2, ch - bandPx * 2, rIn);
+
+  // 1) banda base: stone gradient (brown → gold), cartoon flat
+  const stone = ctx.createLinearGradient(0, 0, 0, ch);
+  stone.addColorStop(0.0, '#8A6234');
+  stone.addColorStop(0.5, '#6E4A28');
+  stone.addColorStop(1.0, '#543619');
+  outerPath();
+  ctx.fillStyle = stone;
+  ctx.fill();
+
+  // 2) speckle "stone look" (tan/gold/ochre/brown dots, deterministic)
+  let seed = 1337;
+  const rnd = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+  const speckle = ['#C9A05A', '#D9B36C', '#8A5A28', '#4A3018', '#B98F4E', '#7A5530'];
+  for (let i = 0; i < 900; i++) {
+    const px = rnd() * cw;
+    const py = rnd() * ch;
+    // pula o centro (o hole será perfurado depois, mas economiza desenho)
+    if (px > bandPx && px < cw - bandPx && py > bandPx && py < ch - bandPx) continue;
+    ctx.globalAlpha = 0.14 + rnd() * 0.22;
+    ctx.fillStyle = speckle[Math.floor(rnd() * speckle.length)];
+    const rad = 0.8 + rnd() * 2.4;
+    ctx.beginPath();
+    ctx.arc(px, py, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // 3) perfura o hole central (o grid aparece por dentro)
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  holePath();
+  ctx.fill();
+  ctx.restore();
+
+  // 4) bevel chunky: highlight gold no topo, sombra escura na base
+  ctx.save();
+  outerPath();
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(233,196,120,0.55)';
+  ctx.lineWidth = bandPx * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0, bandPx * 0.25);
+  ctx.lineTo(cw, bandPx * 0.25);
   ctx.stroke();
-  // linha interna mais fina, brilho sutil
-  ctx.strokeStyle = 'rgba(0,210,255,0.10)';
-  ctx.lineWidth = 1.5;
-  roundRectPath(ctx, 12, 12, size - 24, size - 24, 18);
+  ctx.strokeStyle = 'rgba(26,15,6,0.55)';
+  ctx.lineWidth = bandPx * 0.55;
+  ctx.beginPath();
+  ctx.moveTo(0, ch - bandPx * 0.28);
+  ctx.lineTo(cw, ch - bandPx * 0.28);
   ctx.stroke();
+  ctx.restore();
+
+  // 5) dark outline externo (quase-preto marrom)
+  ctx.strokeStyle = '#1B1108';
+  ctx.lineWidth = bandPx * 0.28;
+  outerPath();
+  ctx.stroke();
+
+  // 6) pale gold/cream inner rim (contorno creme junto ao poço)
+  ctx.strokeStyle = '#F0E6C8';
+  ctx.lineWidth = bandPx * 0.20;
+  holePath();
+  ctx.stroke();
+
+  // 7) rivets dourados nos cantos (arcade charm)
+  const rivet = (cx, cy) => {
+    ctx.fillStyle = '#E8C878';
+    ctx.beginPath();
+    ctx.arc(cx, cy, bandPx * 0.11, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(60,38,12,0.85)';
+    ctx.beginPath();
+    ctx.arc(cx + bandPx * 0.03, cy + bandPx * 0.03, bandPx * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const mid = bandPx * 0.62;
+  rivet(mid, mid);
+  rivet(cw - mid, mid);
+  rivet(mid, ch - mid);
+  rivet(cw - mid, ch - mid);
 
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -162,12 +289,14 @@ export class BoardMesh {
     this._boardGroup = new THREE.Group();
     this._boardGroup.position.set(0, RENDER.CAMERA_LOOKAT[1], 0); // visible band center
 
-    // halo de luz radial atrás do tabuleiro (backdrop glow — sutil, violeta)
+    // halo quente atrás do tabuleiro (backdrop glow âmbar/gold — arcade,
+    // não neon violeta). Com a placa escura opaca na frente, vira um anel
+    // de luz quente contornando o board — Columns vibe.
     const backdropMat = new THREE.MeshBasicMaterial({
       map: makeBackdropTexture(),
-      color: 0x6c5ce7, // violeta profundo, não cyan
+      color: 0xb9893f, // âmbar dourado quente, cartoon arcade
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.26,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -175,9 +304,10 @@ export class BoardMesh {
     backdrop.position.z = -0.95;
     this._boardGroup.add(backdrop);
 
-    // dark backing well (gives transmissive gems something to refract)
+    // dark backing well (dá às gems transmissivas algo para refratar) —
+    // navy quase-preto, consistente com o interior
     const backMat = new THREE.MeshBasicMaterial({
-      color: 0x06060b,
+      color: 0x0a0e1a,
       transparent: true,
       opacity: 0.9,
       depthWrite: false,
@@ -186,7 +316,18 @@ export class BoardMesh {
     backing.position.z = -0.75;
     this._boardGroup.add(backing);
 
-    // premium grid (cell fills + grid lines + bevel)
+    // camada 1 do frame cartoon: dark outline EXTERNO — placa escura
+    // arredondada maior que tudo, aparece como contorno quase-preto
+    // ao redor da moldura (stone look)
+    const plateMat = new THREE.MeshBasicMaterial({ color: 0x1a120b });
+    const plate = new THREE.Mesh(
+      new THREE.ShapeGeometry(roundedRectShape(boardW + 1.5, boardH + 1.5, 0.5)),
+      plateMat
+    );
+    plate.position.z = -0.63;
+    this._boardGroup.add(plate);
+
+    // grid cartoon (cell fills navy escuro + checker + grid lines gray-blue)
     const gridMat = new THREE.MeshBasicMaterial({
       map: makeGridTexture(),
       transparent: true,
@@ -196,13 +337,14 @@ export class BoardMesh {
     grid.position.z = -0.6;
     this._boardGroup.add(grid);
 
-    // moldura arredondada com glow cyan (+ hairline violeta)
+    // moldura cartoon EM CAMADAS (camadas 2+3: pale gold/cream inner rim
+    // + thicker brown/gold structural border com stone speckle)
     const frameMat = new THREE.MeshBasicMaterial({
-      map: makeFrameTexture(),
+      map: makeCartoonFrameTexture(),
       transparent: true,
       depthWrite: false,
     });
-    const frame = new THREE.Mesh(new THREE.PlaneGeometry(boardW + 0.62, boardH + 0.62), frameMat);
+    const frame = new THREE.Mesh(new THREE.PlaneGeometry(boardW + 1.24, boardH + 1.24), frameMat);
     frame.position.z = -0.55;
     this._boardGroup.add(frame);
 

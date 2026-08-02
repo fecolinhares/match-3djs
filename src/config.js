@@ -5,8 +5,8 @@
 
 export const BOARD = {
   COLS: 8,
-  ROWS: 12,          // total rows; top 2-3 são off-screen (spawn zone)
-  VISIBLE_ROWS: 8,   // rows visíveis no viewport
+  ROWS: 16,          // total rows; top 4 são off-screen (spawn zone)
+  VISIBLE_ROWS: 12,  // rows visíveis no viewport (Columns classic: campo alto)
   VISIBLE_START: 4,  // primeira row visível (ROWS - VISIBLE_ROWS)
   CELL_SIZE: 1.0,
   GAP: 1.12,         // espaçamento entre células (respiro visual)
@@ -31,18 +31,21 @@ export const COLUMN = {
 
 export const GEM_COLORS = 6; // 6 cores + wild (índice 6)
 
-// Cada cor: [nome, corBase, corEmissiva, corSpecular]
-// Anti-slop (taste): cores com matiz distinto + saturação controlada,
+// Cada cor: [nome, corBase, corEmissiva, corSpecular, forma]
+// Forma fixa por cor (Columns-classic): silhouette ajuda a distinguir
+// cores (acessibilidade!) — round/ball, diamond (losango vertical),
+// square (rounded-square block).
+// Cartoon arcade: matizes saturados com identidade de cor preservada,
 // NÃO o "rainbow puro" de IA. Frost Diamond é a mais clara mas não
 // branca pura — evita washout sob bloom.
 export const GEM_DEFS = [
-  ['Fire Ruby',    '#E0314E', '#FF5C73', '#FFC4CE'],
-  ['Solar Topaz',  '#E8890B', '#FFB224', '#FFE3B0'],
-  ['Emerald',      '#2FA86B', '#5FD68F', '#C9F2DA'],
-  ['Aquamarine',   '#0E9FBB', '#38CBE8', '#C9F4FB'],
-  ['Amethyst',     '#8E4EC6', '#B87AE0', '#EBD6F7'],
-  ['Frost Diamond','#B8C0CE', '#7A8496', '#FFFFFF'],
-  ['Wild Star',    '#E2B400', '#FFD60A', '#FFF3B0'],  // índice 6 — especial
+  ['Fire Ruby',    '#F02E4E', '#FF6A80', '#FFD6DC', 'round'],
+  ['Solar Topaz',  '#FF9F1C', '#FFC24D', '#FFE9BC', 'diamond'],
+  ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'square'],
+  ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'diamond'],
+  ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'round'],
+  ['Frost Diamond','#C9D3E2', '#94A2B8', '#FFFFFF', 'square'],
+  ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'diamond'],  // índice 6 — especial
 ];
 
 export const SCORING = {
