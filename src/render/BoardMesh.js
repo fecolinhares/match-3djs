@@ -756,13 +756,14 @@ export class BoardMesh {
       const m = this._ghostGems[i];
       if (!m.material || m.material.userData.colorIndex !== this._previewColors[i]) {
         const def = GEM_DEFS[this._previewColors[i]] ?? GEM_DEFS[GEM_DEFS.length - 1];
-        // Ghost com NormalBlending (fantasma translúcido SÓLIDO), não additive:
-        // additive (como o beam) faz o ghost sumir na luz. NormalBlending +
-        // opacidade média = silhueta visível que não compete com o beam.
+        // Ghost: cor MUITO clara (mix 65% branco) + opacidade baixa =
+        // silhueta fantasma inconfundível, distinta da coluna real sólida.
+        const base = new THREE.Color(def[1]);
+        const light = base.clone().lerp(new THREE.Color('#FFFFFF'), 0.65);
         const ghostMat = new THREE.MeshBasicMaterial({
-          color: new THREE.Color(def[1]), // cor base
+          color: light,
           transparent: true,
-          opacity: 0.55,
+          opacity: 0.35,
           depthWrite: false,
           blending: THREE.NormalBlending,
         });
