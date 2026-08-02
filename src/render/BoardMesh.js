@@ -63,10 +63,11 @@ function roundRectPath(ctx, x, y, w, h, r) {
 
 /**
  * Cartoon-arcade board surface texture (Columns classic):
- *  - interior quase-preto navy (#0A0E1A), fills FLAT cartoon (não neon)
- *  - checkerboard sutil e MAIS ESCURO (duas tonalidades de navy)
- *  - bevel hard: highlight 1-2px no topo + sombra na base (cartoon)
- *  - grid lines gray-blue FINAS entre as células
+ *  - interior navy CLAREADO (não preto total), fills FLAT cartoon
+ *  - checkerboard com CONTRASTE forte (duas tonalidades de navy bem
+ *    distintas — leitura arcade)
+ *  - bevel hard PRESENTE: highlight no topo + sombra grossa na base
+ *  - grid lines gray-blue VISÍVEIS entre as células
  *  - sem borda neon — a moldura em camadas (makeCartoonFrameTexture)
  *    cuida do contorno externo
  */
@@ -89,36 +90,39 @@ function makeGridTexture() {
       const w = stepX - cellInset * 2;
       const h = stepY - cellInset * 2;
 
-      // Cartoon arcade: quase-preto navy, só duas tonalidades (checker).
-      // Luz de cima: topo levemente mais claro, base mais escura (sutil).
+      // Cartoon arcade: navy clareado (não preto total), duas tonalidades
+      // com CONTRASTE forte — checker bem legível de longe.
       const checker = (row + col) % 2 === 0;
       const g = ctx.createLinearGradient(0, y, 0, y + h);
       if (checker) {
-        g.addColorStop(0.0, '#121830');
-        g.addColorStop(1.0, '#0E1426');
+        g.addColorStop(0.0, '#1B2649');
+        g.addColorStop(1.0, '#141D3A');
       } else {
-        g.addColorStop(0.0, '#0A0E1A');
-        g.addColorStop(1.0, '#080B15');
+        g.addColorStop(0.0, '#0D1224');
+        g.addColorStop(1.0, '#090D1A');
       }
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.fillStyle = g;
       ctx.fill();
 
-      // bevel cartoon hard: highlight no topo + sombra na base
+      // bevel cartoon HARD: highlight presente no topo (2 camadas) +
+      // sombra grossa na base — profundidade de "botão" de arcade
       ctx.save();
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.clip();
-      ctx.fillStyle = 'rgba(150,175,230,0.10)';
-      ctx.fillRect(x, y, w, 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.40)';
-      ctx.fillRect(x, y + h - 2.5, w, 2.5);
+      ctx.fillStyle = 'rgba(170,196,245,0.20)';
+      ctx.fillRect(x, y, w, 3);
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.fillRect(x, y + 3, w, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(x, y + h - 4, w, 4);
       ctx.restore();
     }
   }
 
-  // --- grid lines gray-blue FINAS (visíveis mas discretas) -----------
-  ctx.strokeStyle = 'rgba(170,190,225,0.30)';  // era 0.20 — grid sumia (vision)
-  ctx.lineWidth = 1.5;
+  // --- grid lines gray-blue VISÍVEIS (cartoon arcade legível) --------
+  ctx.strokeStyle = 'rgba(170,190,225,0.38)';  // era 0.30 — grid sumia (vision)
+  ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i <= COLS; i++) {
     const x = i * stepX + 0.5;
