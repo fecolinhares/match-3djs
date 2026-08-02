@@ -58,9 +58,9 @@ export const RENDER = {
   FOV: 42,
   CAMERA_POS: [0, 0, 16],
   CAMERA_LOOKAT: [0, -1.5, 0],
-  BLOOM_STRENGTH: 0.35,
-  BLOOM_RADIUS: 0.45,
-  BLOOM_THRESHOLD: 0.95, // alto: só sparkles intensos brilham; evita washout
+  BLOOM_STRENGTH: 0.28,
+  BLOOM_RADIUS: 0.42,
+  BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout
                          // branco nas gems claras (Frost Diamond)
   AMBIENT_INTENSITY: 0.35,
   KEY_LIGHT_INTENSITY: 2.2,
