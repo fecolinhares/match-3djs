@@ -44,7 +44,7 @@ export const GEM_DEFS = [
   ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'emerald'],   // esmeralda step-cut (middle-left)
   ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'square'],    // square-cut safira (top-right)
   ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'brilliant'], // brilliant ponta-embaixo (bottom-left)
-  ['Frost Diamond','#AEB8CC', '#7C88A0', '#E8EEF8', 'sphere'],   // mais escura p/ outline preto aparecer (era #C9D3E2)
+  ['Frost Diamond','#9AA6BD', '#6E7A93', '#DCE4F2', 'sphere'],   // mais escura p/ outline preto aparecer (era #C9D3E2)
   ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'brilliant'], // índice 6 — especial
 ];
 
