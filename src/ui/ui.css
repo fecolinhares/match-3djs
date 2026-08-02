@@ -15,7 +15,9 @@
   --m3d-text-dim: rgba(242, 244, 248, 0.55);
   --m3d-glass: rgba(255, 255, 255, 0.04);
   --m3d-glass-border: rgba(255, 255, 255, 0.10);
-  --m3d-border-grad: linear-gradient(135deg, rgba(0, 210, 255, 0.8), rgba(123, 47, 255, 0.16) 46%, rgba(123, 47, 255, 0.8));
+  /* Borda gradiente contida — violeta dominante, cyan como toque sutil.
+     (antes cyan 0.8 dominava → look "neon genérico") */
+  --m3d-border-grad: linear-gradient(135deg, rgba(140, 124, 255, 0.55), rgba(123, 47, 255, 0.12) 46%, rgba(0, 210, 255, 0.30));
   --m3d-font-display: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --m3d-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
@@ -151,11 +153,11 @@ body {
   font-size: clamp(30px, 4.5vw, 46px);
   font-weight: 700;
   line-height: 1;
-  background: linear-gradient(180deg, #FFFFFF 0%, #D4F2FF 42%, #7FE0FF 78%, #9FC4FF 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 14px rgba(0, 210, 255, 0.38));
+  /* Sólido, não gradient text (impeccable ban). Branco quente + glow sutil. */
+  color: #F4F6FB;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 18px rgba(140, 124, 255, 0.22);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   white-space: nowrap;
@@ -331,23 +333,27 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 1.1;
-  background: linear-gradient(180deg, #FFFFFF 0%, #7FE7FF 52%, #B79CFF 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 22px rgba(0, 210, 255, 0.85)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.4));
+  /* Sólido + glow (não gradient text — impeccable ban) */
+  color: #FFFFFF;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(140, 124, 255, 0.55);
   white-space: nowrap;
   animation: m3d-combo-pop 1.05s cubic-bezier(0.2, 1.4, 0.3, 1) forwards;
 }
 
 .m3d-combo-text[data-tier='epic'] {
-  background: linear-gradient(180deg, #FFFFFF 0%, #E2B0FF 45%, #7B2FFF 100%);
-  filter: drop-shadow(0 0 26px rgba(175, 82, 222, 0.9)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.4));
+  color: #F2E4FF;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    0 0 26px rgba(175, 82, 222, 0.65);
 }
 
 .m3d-combo-text[data-tier='legend'] {
-  background: linear-gradient(180deg, #FFF6D8 0%, #FFD60A 48%, #FF9F0A 100%);
-  filter: drop-shadow(0 0 28px rgba(255, 214, 10, 0.9)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.4));
+  color: #FFF3B0;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(255, 214, 10, 0.6);
 }
 
 @keyframes m3d-combo-pop {
@@ -522,36 +528,31 @@ body {
   letter-spacing: 0.02em;
   line-height: 1.02;
   margin: 0 0 10px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #D8F4FF 38%, #6FD9FF 72%, #B79CFF 100%);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 26px rgba(0, 210, 255, 0.4));
-  animation: m3d-title-shimmer 7s ease-in-out infinite;
+  /* Sólido premium (não gradient text — impeccable ban). Branco quente
+     + glow violeta sutil; shimmer feito via text-shadow pulsante. */
+  color: #F6F8FD;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 22px rgba(140, 124, 255, 0.35);
+  animation: m3d-title-pulse 5s ease-in-out infinite;
 }
 
 .m3d-menu-title .m3d-accent {
-  background: linear-gradient(90deg, var(--m3d-cyan) 0%, #7B2FFF 55%, #D9A0F5 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 18px rgba(123, 47, 255, 0.75));
+  color: #B79CFF;
+  text-shadow: 0 0 20px rgba(140, 124, 255, 0.55);
 }
 
 .m3d-menu-title.m3d-title-gameover {
-  background: linear-gradient(180deg, #FF8FA5 0%, #FF2D55 55%, #B3123C 100%);
-  background-size: auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 30px rgba(255, 45, 85, 0.55));
+  color: #FF8FA5;
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.35),
+    0 0 26px rgba(255, 45, 85, 0.45);
   animation: none;
 }
 
-@keyframes m3d-title-shimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50%      { background-position: 100% 50%; }
+@keyframes m3d-title-pulse {
+  0%, 100% { text-shadow: 0 2px 0 rgba(0,0,0,0.35), 0 0 18px rgba(140,124,255,0.30); }
+  50%      { text-shadow: 0 2px 0 rgba(0,0,0,0.35), 0 0 30px rgba(140,124,255,0.55); }
 }
 
 .m3d-menu-subtitle {
@@ -584,10 +585,9 @@ body {
   font-family: var(--m3d-font-mono);
   font-size: 28px;
   font-weight: 600;
-  background: linear-gradient(180deg, #FFFFFF, #B8E9FF);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* Sólido, não gradient text (impeccable ban) */
+  color: #F4F6FB;
+  text-shadow: 0 0 16px rgba(140, 124, 255, 0.25);
   font-variant-numeric: tabular-nums;
   margin-top: 4px;
   white-space: nowrap;
@@ -662,10 +662,10 @@ body {
 .m3d-btn:hover {
   transform: translateY(-1px);
   background: #34344A;
-  border-color: rgba(0, 210, 255, 0.6);
+  border-color: rgba(140, 124, 255, 0.5);
   box-shadow:
-    0 0 0 1px rgba(0, 210, 255, 0.35),
-    0 12px 40px rgba(0, 210, 255, 0.3),
+    0 0 0 1px rgba(140, 124, 255, 0.25),
+    0 12px 40px rgba(123, 47, 255, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 

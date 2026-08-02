@@ -32,14 +32,17 @@ export const COLUMN = {
 export const GEM_COLORS = 6; // 6 cores + wild (índice 6)
 
 // Cada cor: [nome, corBase, corEmissiva, corSpecular]
+// Anti-slop (taste): cores com matiz distinto + saturação controlada,
+// NÃO o "rainbow puro" de IA. Frost Diamond é a mais clara mas não
+// branca pura — evita washout sob bloom.
 export const GEM_DEFS = [
-  ['Fire Ruby',    '#FF2D55', '#FF6B81', '#FFC4CE'],
-  ['Solar Topaz',  '#FF9F0A', '#FFC24B', '#FFE3B0'],
-  ['Emerald',      '#30D158', '#7BE9A0', '#D2F7DF'],
-  ['Aquamarine',   '#0BD1E8', '#6FE7F5', '#D6FBFF'],
-  ['Amethyst',     '#AF52DE', '#D9A0F5', '#F2DFFB'],
-  ['Frost Diamond','#D6DAE4', '#9AA4B8', '#FFFFFF'],
-  ['Wild Star',    '#FFD60A', '#FFF3B0', '#FFF8D6'],  // índice 6 — especial
+  ['Fire Ruby',    '#E0314E', '#FF5C73', '#FFC4CE'],
+  ['Solar Topaz',  '#E8890B', '#FFB224', '#FFE3B0'],
+  ['Emerald',      '#2FA86B', '#5FD68F', '#C9F2DA'],
+  ['Aquamarine',   '#0E9FBB', '#38CBE8', '#C9F4FB'],
+  ['Amethyst',     '#8E4EC6', '#B87AE0', '#EBD6F7'],
+  ['Frost Diamond','#B8C0CE', '#7A8496', '#FFFFFF'],
+  ['Wild Star',    '#E2B400', '#FFD60A', '#FFF3B0'],  // índice 6 — especial
 ];
 
 export const SCORING = {
@@ -55,10 +58,10 @@ export const RENDER = {
   FOV: 42,
   CAMERA_POS: [0, 0, 16],
   CAMERA_LOOKAT: [0, -1.5, 0],
-  BLOOM_STRENGTH: 0.55,
-  BLOOM_RADIUS: 0.5,
-  BLOOM_THRESHOLD: 0.92, // alto: só sparkles + emissive intenso brilham,
-                         // não o corpo da gem (evita look de "orbe de luz")
+  BLOOM_STRENGTH: 0.35,
+  BLOOM_RADIUS: 0.45,
+  BLOOM_THRESHOLD: 0.95, // alto: só sparkles intensos brilham; evita washout
+                         // branco nas gems claras (Frost Diamond)
   AMBIENT_INTENSITY: 0.35,
   KEY_LIGHT_INTENSITY: 2.2,
   FILL_LIGHT_INTENSITY: 0.6,
