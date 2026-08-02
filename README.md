@@ -36,17 +36,26 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 
 ## ✨ Features
 
-- **Gems com aparência de pedras preciosas** — MeshPhysicalMaterial com
-  refração, iridescência e glow interno (nada de cubos de plástico)
-- **Iluminação cinematográfica** — key warm, fill azulado, rim violeta
+- **6 jóias em silhuetas únicas** — rubi hexagonal, safira square-cut,
+  esmeralda step-cut, topázio pêra, amatista brilliant e esfera facetada,
+  cada cor com sua forma (acessibilidade visual)
+- **Estilo cartoon arcade** — gems flat com contorno ink escuro grosso,
+  outlines que seguem cada silhueta
+- **Fundo de pedra/tijolo** — parede de arcade cabinet desenhada em canvas
+- **Ghost preview holograma** — formas reais da coluna em wireframe
+  dashed branco mostram onde a peça vai pousar
+- **Iluminação cartoon** — key quente + fill suave, shading por faceta
+  (sem vidro refrativo)
 - **Bloom seletivo** — gems brilham, HUD não
 - **Partículas explosivas** — fragmentos, sparkles, ring shockwave
 - **Screen shake** sutil em combos grandes
 - **Cascatas + combos** — multiplicadores de pontuação
 - **Wild Star** — gem especial rara com bônus
-- **HUD glass** — score animado, preview da próxima coluna, nível
+- **HUD arcade compacto** — Score/Next/Level juntos no topo, bordas
+  douradas, sombras duras cartoon
 - **Audio sintetizado** — WebAudio, zero arquivos externos
 - **Reduced motion** respeitado (`prefers-reduced-motion`)
+- **Controles** — mouse, teclado e touch (mobile-first)
 
 ## 🛠️ Tech
 
