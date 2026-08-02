@@ -594,7 +594,9 @@ export class BoardMesh {
     }
     const x = this._previewX;
     const row0 = this._landingRow(x);
-    if (row0 < 0 || row0 + 2 >= ROWS) {
+    // row0 é a BASE da coluna; gems em row0-2..row0. Inválido se a base
+    // sobe além do topo (row0-2 < 0) ou está fora do board (row0 >= ROWS).
+    if (row0 < 0 || row0 - 2 < 0 || row0 >= ROWS) {
       this._ghostGroup.visible = false;
       this._ghostLine.visible = false;
       return;
@@ -604,17 +606,20 @@ export class BoardMesh {
       const m = this._ghostGems[i];
       if (!m.material || m.material.userData.colorIndex !== this._previewColors[i]) {
         const def = GEM_DEFS[this._previewColors[i]] ?? GEM_DEFS[GEM_DEFS.length - 1];
+        // Ghost com NormalBlending (fantasma translúcido SÓLIDO), não additive:
+        // additive (como o beam) faz o ghost sumir na luz. NormalBlending +
+        // opacidade média = silhueta visível que não compete com o beam.
         const ghostMat = new THREE.MeshBasicMaterial({
-          color: new THREE.Color(def[1]),
+          color: new THREE.Color(def[1]), // cor base
           transparent: true,
-          opacity: 0.5,
+          opacity: 0.55,
           depthWrite: false,
-          blending: THREE.AdditiveBlending,
+          blending: THREE.NormalBlending,
         });
         ghostMat.userData.colorIndex = this._previewColors[i];
         m.material = ghostMat;
       }
-      const p = cellToWorld(x, row0 + i);
+      const p = cellToWorld(x, row0 - i); // base row0, gems sobem (i=0 base)
       m.position.set(p.x, p.y, p.z + 0.02);
     }
     // linha de pouso na linha do ghost (base da coluna)
