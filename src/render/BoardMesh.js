@@ -95,11 +95,12 @@ function makeGridTexture() {
       const checker = (row + col) % 2 === 0;
       const g = ctx.createLinearGradient(0, y, 0, y + h);
       if (checker) {
-        g.addColorStop(0.0, '#1B2649');
-        g.addColorStop(1.0, '#141D3A');
+        // cell clara — navy mais vivo (vision: board ainda muito escuro)
+        g.addColorStop(0.0, '#24325E');
+        g.addColorStop(1.0, '#1B2547');
       } else {
-        g.addColorStop(0.0, '#0D1224');
-        g.addColorStop(1.0, '#090D1A');
+        g.addColorStop(0.0, '#131A33');
+        g.addColorStop(1.0, '#0E1428');
       }
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.fillStyle = g;
