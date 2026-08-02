@@ -47,8 +47,15 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 ## 🚀 Rodando
 
 ```bash
-npm install   # (veja nota abaixo sobre o symlink do node_modules)
+npm install
 npm run dev   # → http://localhost:3456
+```
+
+Para build de produção:
+
+```bash
+npm run build      # gera em dist/
+npm run preview    # serve o build localmente
 ```
 
 ## 🌐 Deploy (GitHub Pages)

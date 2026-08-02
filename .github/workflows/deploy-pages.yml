@@ -39,21 +39,13 @@ jobs:
       - name: Build
         run: npm run build
 
-      # O vite.config usa dist (local build step).
-      # Copia para ./dist no workspace para o upload-pages-artifact.
-      - name: Stage build artifact
-        run: |
-          mkdir -p ./dist
-          cp -r dist/* ./dist/
-          ls -la ./dist/
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: dist
 
   deploy:
     needs: build

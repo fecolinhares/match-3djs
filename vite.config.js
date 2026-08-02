@@ -12,8 +12,10 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
-    // build output dir override
-    outDir: 'dist',
+    // outDir padrão 'dist' — universal. Pode ser sobrescrito por env var
+    // (ex: M3D_OUT_DIR=/some/out/dir npm run build) para filesystems que
+    // bloqueiam copyfile (copyfile-restricted filesystems/9p).
+    outDir: process.env.M3D_OUT_DIR || 'dist',
     emptyOutDir: true,
   },
 });
