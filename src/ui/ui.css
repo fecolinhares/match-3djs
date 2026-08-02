@@ -1,7 +1,9 @@
 /* ============================================================
-   Match-3D.js — UI stylesheet (HUD + Menu) — edição AAA v2
-   Tokens do DESIGN.md: dark tech arcade, glass HUD premium,
-   bordas gradiente cyan→violet, shine sweep, aurora no menu.
+   Match-3D.js — UI stylesheet (HUD + Menu)
+   Direção: CARTOON ARCADE (Columns revival, Sega 1990).
+   HUD: cluster compacto no TOPO CENTRAL — [SCORE] [NEXT] [LEVEL/LINES]
+   juntos, painéis black inset com borda pale gold/cream, cantos
+   modestos, preview vertical de 3 gems. Menu mantém overlay premium.
    Importado por HUD.js e Menu.js.
    ============================================================ */
 
@@ -11,12 +13,14 @@
   --m3d-violet: #7B2FFF;
   --m3d-ruby: #FF2D55;
   --m3d-gold: #FFD60A;
+  /* Paleta cartoon arcade — pale gold / cream */
+  --m3d-gold-pale: #EAD9A8;
+  --m3d-gold-deep: #B99A4E;
   --m3d-text: #F2F4F8;
-  --m3d-text-dim: rgba(242, 244, 248, 0.62); /* mais legível que 0.55 */
+  --m3d-text-dim: rgba(242, 244, 248, 0.62);
   --m3d-glass: rgba(255, 255, 255, 0.04);
   --m3d-glass-border: rgba(255, 255, 255, 0.10);
-  /* Borda gradiente contida — violeta dominante, cyan como toque sutil.
-     (antes cyan 0.8 dominava → look "neon genérico") */
+  /* Borda gradiente contida (usada só no card do menu) */
   --m3d-border-grad: linear-gradient(135deg, rgba(140, 124, 255, 0.55), rgba(123, 47, 255, 0.12) 46%, rgba(0, 210, 255, 0.30));
   --m3d-font-display: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --m3d-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -49,7 +53,7 @@ body {
 }
 
 /* ------------------------------------------------------------
-   Borda gradiente + shine sweep (painéis do HUD e card do menu)
+   Shine sweep (usado no card do menu)
    ------------------------------------------------------------ */
 
 @keyframes m3d-shine {
@@ -58,7 +62,8 @@ body {
 }
 
 /* ------------------------------------------------------------
-   HUD — glass panels premium
+   HUD — cluster compacto topo-central (Columns classic)
+   Painéis black inset com borda pale gold/cream.
    ------------------------------------------------------------ */
 
 .m3d-hud {
@@ -66,10 +71,8 @@ body {
   inset: 0;
   z-index: 10;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 18px;
-  padding: 22px 26px;
+  flex-direction: column;
+  align-items: center;
   pointer-events: none;
   font-family: var(--m3d-font-display);
   box-sizing: border-box;
@@ -77,16 +80,18 @@ body {
   transition: opacity 0.3s ease;
 }
 
-/* Agrupa Score + Next à esquerda (Next fora do board — não sobrepõe) */
-.m3d-hud-left {
+/* Cluster central: [SCORE] [NEXT] [LEVEL/LINES] juntos, no topo.
+   flex-wrap garante que em telas estreitas os painéis desçam de
+   linha sem sobrepor uns aos outros (continuam centralizados). */
+.m3d-hud-cluster {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-/* Next movido para o grupo esquerdo: .m3d-hud-next perde position center */
-.m3d-hud-next {
-  margin-top: 2px;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  max-width: calc(100vw - 20px);
+  box-sizing: border-box;
 }
 
 .m3d-hud--hidden {
@@ -98,78 +103,65 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
+/* Painel: black inset + borda pale gold (cartoon arcade) */
 .m3d-hud-panel {
   position: relative;
-  border-radius: 16px;
-  padding: 14px 18px;
-  min-width: 120px;
-  background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02) 45%, rgba(123, 47, 255, 0.055));
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 108px;
+  text-align: center;
+  color: var(--m3d-text);
+  background: linear-gradient(180deg, #0C0E15 0%, #05060A 55%, #07080D 100%);
+  border: 2px solid var(--m3d-gold-pale);
   box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.09),
-    inset 0 0 26px rgba(0, 210, 255, 0.045);
+    0 5px 0 rgba(0, 0, 0, 0.55),
+    0 10px 24px rgba(0, 0, 0, 0.45),
+    inset 0 2px 8px rgba(0, 0, 0, 0.85),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* Borda gradiente cyan→violet (1px, máscara dupla) */
+/* Bevel interno superior sutil (highlight cartoon) */
 .m3d-hud-panel::before {
   content: '';
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--m3d-border-grad);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Shine sweep periódico */
-.m3d-hud-panel::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 45%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.085), transparent);
-  transform: translateX(-240%) skewX(-18deg);
-  animation: m3d-shine 5.5s ease-in-out infinite;
+  top: 3px;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  border-radius: 2px;
+  background: rgba(234, 217, 168, 0.28);
   pointer-events: none;
 }
 
 .m3d-label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--m3d-text-dim);
-  margin-bottom: 6px;
+  color: #B9AE8C;
+  margin-bottom: 5px;
 }
 
 /* Score */
 .m3d-score-row {
   display: flex;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .m3d-score-value {
   display: inline-block;
   font-family: var(--m3d-font-mono);
-  font-size: clamp(30px, 4.5vw, 46px);
+  font-size: clamp(26px, 3.4vw, 40px);
   font-weight: 700;
   line-height: 1;
-  /* Sólido, não gradient text (impeccable ban). Branco quente + glow sutil. */
-  color: #F4F6FB;
+  /* Sólido (impeccable ban) — cream quente + glow gold sutil */
+  color: #F7F0DC;
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 0 18px rgba(140, 124, 255, 0.22);
+    0 2px 0 rgba(0, 0, 0, 0.6),
+    0 0 14px rgba(234, 217, 168, 0.25);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   white-space: nowrap;
@@ -185,7 +177,7 @@ body {
   100% { transform: scale(1); }
 }
 
-/* Combo badge (inline no painel de score) */
+/* Combo badge (inline no painel de score) — pill gold sobre black */
 .m3d-combo-badge {
   display: inline-flex;
   align-items: center;
@@ -194,15 +186,15 @@ body {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #EAF9FF;
-  background: linear-gradient(135deg, rgba(0, 210, 255, 0.22), rgba(123, 47, 255, 0.28));
-  border: 1px solid rgba(0, 210, 255, 0.5);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 7px;
+  color: #FFF6DC;
+  background: linear-gradient(180deg, #2A2413, #151004);
+  border: 1px solid var(--m3d-gold-pale);
+  border-radius: 8px;
+  padding: 3px 8px;
   white-space: nowrap;
-  box-shadow: 0 0 14px rgba(0, 210, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  text-shadow: 0 0 9px rgba(0, 210, 255, 0.9);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    0 0 10px rgba(234, 217, 168, 0.25);
 }
 
 .m3d-combo-badge[hidden] {
@@ -210,18 +202,19 @@ body {
 }
 
 .m3d-combo-badge[data-tier='epic'] {
-  border-color: rgba(175, 82, 222, 0.65);
-  background: linear-gradient(135deg, rgba(123, 47, 255, 0.3), rgba(255, 45, 85, 0.24));
-  box-shadow: 0 0 16px rgba(123, 47, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  text-shadow: 0 0 10px rgba(217, 160, 245, 0.95);
+  border-color: #E8B84C;
+  color: #FFE9B8;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    0 0 12px rgba(232, 184, 76, 0.4);
 }
 
 .m3d-combo-badge[data-tier='legend'] {
-  color: #FFF6D8;
-  border-color: rgba(255, 214, 10, 0.75);
-  background: linear-gradient(135deg, rgba(255, 214, 10, 0.26), rgba(255, 45, 85, 0.32));
-  box-shadow: 0 0 18px rgba(255, 214, 10, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  text-shadow: 0 0 10px rgba(255, 214, 10, 0.95);
+  border-color: var(--m3d-gold);
+  color: #FFF3B0;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    0 0 14px rgba(255, 214, 10, 0.5);
 }
 
 .m3d-combo-badge.m3d-badge-pop {
@@ -234,34 +227,35 @@ body {
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
 
-/* Next preview — slots emoldurados */
+/* Next preview — coluna vertical com 3 gems empilhadas */
 .m3d-next-stack {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 4px 0;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
 }
 
 .m3d-next-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(10, 12, 22, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(234, 217, 168, 0.22);
   box-shadow:
-    inset 0 2px 10px rgba(0, 0, 0, 0.55),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 2px 8px rgba(0, 0, 0, 0.8),
+    inset 0 -1px 0 rgba(234, 217, 168, 0.08);
 }
 
 .m3d-next-gem {
-  width: 26px;
-  height: 30px;
+  width: 22px;
+  height: 26px;
   clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
   background: radial-gradient(circle at 35% 28%, var(--gem-glow), var(--gem-base) 58%, rgba(0, 0, 0, 0.45));
-  filter: drop-shadow(0 0 5px var(--gem-glow));
+  filter: drop-shadow(0 0 4px var(--gem-glow));
 }
 
 .m3d-next-gem.m3d-next-empty {
@@ -269,37 +263,51 @@ body {
   filter: none;
 }
 
-/* Stats: level + progress + lines */
+/* Stats compactos: Level + Lines lado a lado + barra de progresso */
 .m3d-hud-stats {
-  min-width: 170px;
-}
-
-.m3d-stat-row {
+  min-width: 132px;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--m3d-text-dim);
-  white-space: nowrap;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
 }
 
-.m3d-stat-row b {
+.m3d-stats-grid {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.m3d-stat-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.m3d-stat-cell .m3d-label {
+  margin-bottom: 0;
+  font-size: 10px;
+}
+
+.m3d-stat-cell b {
   font-family: var(--m3d-font-mono);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
-  color: #F4F6FB;
+  color: #F7F0DC;
   font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
 }
 
 .m3d-progress {
   position: relative;
-  height: 5px;
-  margin: 12px 0;
+  height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(234, 217, 168, 0.25);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
   overflow: hidden;
 }
 
@@ -308,65 +316,48 @@ body {
   height: 100%;
   width: 0%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--m3d-cyan), var(--m3d-violet));
-  box-shadow: 0 0 12px rgba(0, 210, 255, 0.6);
+  background: linear-gradient(90deg, #C9A54A, var(--m3d-gold));
+  box-shadow: 0 0 8px rgba(255, 214, 10, 0.45);
   transition: width 0.25s ease-out;
-  overflow: hidden;
 }
 
-.m3d-progress-fill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: m3d-progress-sheen 2.2s ease-in-out infinite;
-}
-
-@keyframes m3d-progress-sheen {
-  0%   { transform: translateX(-100%); }
-  60%, 100% { transform: translateX(100%); }
-}
-
-/* Combo floating text */
+/* Combo floating text — logo abaixo do cluster (nunca sobrepõe) */
 .m3d-combo-layer {
-  position: absolute;
-  left: 50%;
-  top: 24%;
-  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  margin-top: 26px;
   pointer-events: none;
 }
 
 .m3d-combo-text {
   font-family: var(--m3d-font-display);
-  font-size: clamp(34px, 5vw, 54px);
+  font-size: clamp(30px, 4.6vw, 50px);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   line-height: 1.1;
-  /* Sólido + glow (não gradient text — impeccable ban) */
+  /* Sólido + glow (impeccable ban) */
   color: #FFFFFF;
   text-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.45),
-    0 0 24px rgba(140, 124, 255, 0.55);
+    0 2px 0 rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(234, 217, 168, 0.45);
   white-space: nowrap;
   animation: m3d-combo-pop 1.05s cubic-bezier(0.2, 1.4, 0.3, 1) forwards;
 }
 
 .m3d-combo-text[data-tier='epic'] {
-  color: #F2E4FF;
+  color: #FFE9B8;
   text-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.45),
-    0 0 26px rgba(175, 82, 222, 0.65);
+    0 2px 0 rgba(0, 0, 0, 0.5),
+    0 0 24px rgba(232, 184, 76, 0.55);
 }
 
 .m3d-combo-text[data-tier='legend'] {
   color: #FFF3B0;
   text-shadow:
-    0 2px 0 rgba(0, 0, 0, 0.45),
-    0 0 28px rgba(255, 214, 10, 0.6);
+    0 2px 0 rgba(0, 0, 0, 0.5),
+    0 0 26px rgba(255, 214, 10, 0.6);
 }
 
 @keyframes m3d-combo-pop {
@@ -722,83 +713,82 @@ body {
 }
 
 /* ------------------------------------------------------------
-   Responsivo — mobile (≤620px): compacto, sem overlap, toque 44px+
+   Responsivo — mobile (≤620px): cluster compacto, sem overlap,
+   toque 44px+
    ------------------------------------------------------------ */
 
 @media (max-width: 620px) {
-  .m3d-hud {
-    padding: 12px 12px;
-    gap: 10px;
-    flex-wrap: wrap;
+  .m3d-hud-cluster {
+    margin-top: 10px;
+    gap: 8px;
+    max-width: calc(100vw - 16px);
   }
 
   .m3d-hud-panel {
-    padding: 10px 12px;
-    border-radius: 14px;
+    padding: 9px 12px;
+    border-radius: 9px;
     min-width: 0;
   }
 
-  /* economia de GPU no mobile: sem shine sweep nos painéis */
-  .m3d-hud-panel::after {
-    display: none;
-  }
-
   .m3d-label {
-    font-size: 10px;
+    font-size: 9px;
     margin-bottom: 4px;
   }
 
   .m3d-score-row {
     gap: 6px;
     flex-wrap: wrap;
-    row-gap: 4px;
+    row-gap: 3px;
   }
 
   .m3d-score-value {
-    font-size: clamp(24px, 7.2vw, 34px);
+    font-size: clamp(20px, 6.2vw, 30px);
   }
 
   .m3d-combo-badge {
     font-size: 11px;
-    padding: 3px 8px;
-    margin-bottom: 5px;
+    padding: 2px 7px;
   }
 
   .m3d-next-stack {
     gap: 4px;
-    padding: 2px 0;
+    padding: 0;
   }
 
   .m3d-next-cell {
-    width: 34px;
-    height: 34px;
-    border-radius: 9px;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
   }
 
   .m3d-next-gem {
-    width: 20px;
-    height: 23px;
+    width: 18px;
+    height: 21px;
   }
 
-  /* stats viram barra de status: cresce e, se faltar espaço,
-     quebra para a linha de baixo sem sobrepor os painéis */
   .m3d-hud-stats {
-    flex: 1 1 auto;
     min-width: 0;
+    gap: 6px;
   }
 
-  .m3d-stat-row {
-    font-size: 12px;
-    gap: 10px;
+  .m3d-stats-grid {
+    gap: 14px;
   }
 
-  .m3d-stat-row b {
-    font-size: 14px;
+  .m3d-stat-cell b {
+    font-size: 18px;
   }
 
   .m3d-progress {
-    height: 4px;
-    margin: 9px 0;
+    height: 5px;
+  }
+
+  .m3d-combo-layer {
+    margin-top: 18px;
+  }
+
+  .m3d-combo-text {
+    font-size: clamp(28px, 8.5vw, 40px);
   }
 
   .m3d-menu-card {
@@ -821,10 +811,6 @@ body {
     gap: 5px 10px;
     font-size: 10px;
   }
-
-  .m3d-combo-text {
-    font-size: clamp(28px, 8.5vw, 40px);
-  }
 }
 
 /* Telas muito estreitas — compacta ainda mais */
@@ -834,22 +820,26 @@ body {
   }
 
   .m3d-score-value {
-    font-size: clamp(19px, 7vw, 26px);
+    font-size: clamp(18px, 6.5vw, 24px);
   }
 
   .m3d-next-cell {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
 
   .m3d-next-gem {
-    width: 18px;
-    height: 21px;
+    width: 16px;
+    height: 19px;
   }
 
   .m3d-combo-badge {
     font-size: 10px;
     padding: 2px 6px;
+  }
+
+  .m3d-stat-cell b {
+    font-size: 16px;
   }
 
   .m3d-btn {

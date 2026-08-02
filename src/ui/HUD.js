@@ -1,5 +1,5 @@
 // ============================================================
-// Match-3D.js — HUD (DOM overlay glass premium)
+// Match-3D.js — HUD (DOM overlay cartoon arcade — Columns style)
 //
 // Contrato (ARCHITECTURE.md):
 //   HUD.update(score, level, lines, combo)  — atualiza DOM
@@ -7,10 +7,11 @@
 //   HUD.showCombo(n)                        — texto flutuante "COMBO xn"
 //
 // Extensões: show(), hide(), destroy().
-// Estética (DESIGN.md): glassmorphism premium — borda gradiente
-// cyan→violet, blur 16px, shine sweep animado, score com count-up
-// + pop de escala, combo badge dramático por tier (rare/epic/legend),
-// preview em slots emoldurados (células arredondadas com sombra interna).
+// Estética (DESIGN.md → Columns revival): cluster compacto no TOPO
+// CENTRAL — [SCORE] [NEXT vertical] [LEVEL/LINES] juntos, painéis
+// black inset com borda pale gold/cream e cantos modestos, preview
+// vertical de 3 gems empilhadas, combo badge por tier (rare/epic/
+// legend), score com count-up + pop de escala.
 // ============================================================
 
 import { GEM_DEFS, SCORING } from '../config.js';
@@ -69,6 +70,11 @@ export class HUD {
     root.className = 'm3d-hud';
     root.setAttribute('aria-hidden', 'true');
 
+    // Cluster compacto topo-central (Columns classic):
+    //   [SCORE] [NEXT preview vertical] [LEVEL/LINES]
+    const cluster = document.createElement('div');
+    cluster.className = 'm3d-hud-cluster';
+
     // Score
     const scorePanel = document.createElement('div');
     scorePanel.className = 'm3d-hud-panel m3d-hud-score';
@@ -91,7 +97,7 @@ export class HUD {
     scoreRow.append(this._scoreEl, this._comboBadge);
     scorePanel.append(scoreLabel, scoreRow);
 
-    // Next preview — slots emoldurados (célula + gem dentro)
+    // Next preview — coluna vertical com 3 gems empilhadas
     const nextPanel = document.createElement('div');
     nextPanel.className = 'm3d-hud-panel m3d-hud-next';
 
@@ -104,17 +110,32 @@ export class HUD {
 
     nextPanel.append(nextLabel, this._nextStack);
 
-    // Stats: level + progress + lines
+    // Stats compactos: Level + Lines lado a lado + barra de progresso
     const statsPanel = document.createElement('div');
     statsPanel.className = 'm3d-hud-panel m3d-hud-stats';
 
-    const levelRow = document.createElement('div');
-    levelRow.className = 'm3d-stat-row';
+    const statsGrid = document.createElement('div');
+    statsGrid.className = 'm3d-stats-grid';
+
+    const levelCell = document.createElement('div');
+    levelCell.className = 'm3d-stat-cell';
     const levelLabel = document.createElement('span');
+    levelLabel.className = 'm3d-label';
     levelLabel.textContent = 'Level';
     this._levelValue = document.createElement('b');
     this._levelValue.textContent = '1';
-    levelRow.append(levelLabel, this._levelValue);
+    levelCell.append(levelLabel, this._levelValue);
+
+    const linesCell = document.createElement('div');
+    linesCell.className = 'm3d-stat-cell';
+    const linesLabel = document.createElement('span');
+    linesLabel.className = 'm3d-label';
+    linesLabel.textContent = 'Lines';
+    this._linesValue = document.createElement('b');
+    this._linesValue.textContent = '0';
+    linesCell.append(linesLabel, this._linesValue);
+
+    statsGrid.append(levelCell, linesCell);
 
     const progress = document.createElement('div');
     progress.className = 'm3d-progress';
@@ -122,26 +143,15 @@ export class HUD {
     this._progressFill.className = 'm3d-progress-fill';
     progress.appendChild(this._progressFill);
 
-    const linesRow = document.createElement('div');
-    linesRow.className = 'm3d-stat-row';
-    const linesLabel = document.createElement('span');
-    linesLabel.textContent = 'Lines';
-    this._linesValue = document.createElement('b');
-    this._linesValue.textContent = '0';
-    linesRow.append(linesLabel, this._linesValue);
+    statsPanel.append(statsGrid, progress);
 
-    statsPanel.append(levelRow, progress, linesRow);
+    cluster.append(scorePanel, nextPanel, statsPanel);
 
-    // Camada de combos flutuantes
+    // Camada de combos flutuantes — logo abaixo do cluster
     this._comboLayer = document.createElement('div');
     this._comboLayer.className = 'm3d-combo-layer';
 
-    // Grupo esquerdo: Score + Next (Next fora do board — não sobrepõe)
-    const leftGroup = document.createElement('div');
-    leftGroup.className = 'm3d-hud-left';
-    leftGroup.append(scorePanel, nextPanel);
-
-    root.append(leftGroup, statsPanel, this._comboLayer);
+    root.append(cluster, this._comboLayer);
     this._container.appendChild(root);
     this._root = root;
   }
