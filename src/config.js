@@ -15,13 +15,13 @@ export const BOARD = {
 
 export const COLUMN = {
   GEMS_PER_COLUMN: 3,
-  // Altura de spawn da base da coluna. Antes era -3 (totalmente fora da
-  // tela) e com BASE_FALL_INTERVAL 0.85s a coluna levava ~6s para aparecer
-  // no viewport — o jogador achava que o jogo travou. Agora nasce logo
-  // acima da faixa visível (VISIBLE_START - 3 = 1): gems nas rows -1..1,
-  // já na borda superior da tela. Game over segue funcionando: se o topo
-  // está cheio, canPlace() falha no spawn → over=true imediato.
-  SPAWN_Y: 1,                // base da coluna no spawn (VISIBLE_START - 3)
+  // Altura de spawn da base da coluna = primeira row VISÍVEL do board.
+  // ANTES: SPAWN_Y=1 (VISIBLE_START-3) fazia a coluna nascer 3 rows ACIMA
+  // do topo visível — o jogador só via a peça depois de ~1.65s de queda
+  // ('mal dá pra ver caindo'). Agora nasce no topo do viewport e aparece
+  // imediatamente. Game over: se o topo está cheio, canPlace() falha no
+  // spawn → over=true imediato.
+  SPAWN_Y: 4,                  // VISIBLE_START — base no topo visível
   BASE_FALL_INTERVAL: 0.55,  // segundos por célula no nível 1 (era 0.85 — lento)
   MIN_FALL_INTERVAL: 0.18,   // teto de velocidade
   LEVEL_SPEEDUP: 0.06,       // redução por nível
