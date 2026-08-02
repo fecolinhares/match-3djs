@@ -12,7 +12,7 @@
   --m3d-ruby: #FF2D55;
   --m3d-gold: #FFD60A;
   --m3d-text: #F2F4F8;
-  --m3d-text-dim: rgba(242, 244, 248, 0.55);
+  --m3d-text-dim: rgba(242, 244, 248, 0.62); /* mais legível que 0.55 */
   --m3d-glass: rgba(255, 255, 255, 0.04);
   --m3d-glass-border: rgba(255, 255, 255, 0.10);
   /* Borda gradiente contida — violeta dominante, cyan como toque sutil.
@@ -144,9 +144,9 @@ body {
 
 .m3d-label {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--m3d-text-dim);
   margin-bottom: 6px;
@@ -279,16 +279,17 @@ body {
   justify-content: space-between;
   align-items: baseline;
   gap: 20px;
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--m3d-text-dim);
   white-space: nowrap;
 }
 
 .m3d-stat-row b {
   font-family: var(--m3d-font-mono);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--m3d-text);
+  font-size: 18px;
+  font-weight: 700;
+  color: #F4F6FB;
   font-variant-numeric: tabular-nums;
 }
 

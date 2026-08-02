@@ -85,10 +85,18 @@ function makeGridTexture() {
       const h = stepY - cellInset * 2;
 
       // base: topo mais escuro, base levemente mais clara (luz vinda de cima)
+      // ANTI-SLOP: padrão xadrez sutil (par/ímpar) dá presença e ritmo ao board
+      const checker = (row + col) % 2 === 0;
       const g = ctx.createLinearGradient(0, y, 0, y + h);
-      g.addColorStop(0.0, 'rgba(16,19,38,0.62)');
-      g.addColorStop(0.6, 'rgba(24,28,54,0.68)');
-      g.addColorStop(1.0, 'rgba(32,38,70,0.6)');
+      if (checker) {
+        g.addColorStop(0.0, 'rgba(24,29,54,0.76)');
+        g.addColorStop(0.6, 'rgba(33,40,74,0.82)');
+        g.addColorStop(1.0, 'rgba(44,53,94,0.74)');
+      } else {
+        g.addColorStop(0.0, 'rgba(20,24,44,0.72)');
+        g.addColorStop(0.6, 'rgba(28,34,62,0.78)');
+        g.addColorStop(1.0, 'rgba(38,46,82,0.70)');
+      }
       roundRectPath(ctx, x, y, w, h, radius);
       ctx.fillStyle = g;
       ctx.fill();
