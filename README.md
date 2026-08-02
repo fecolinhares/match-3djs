@@ -5,9 +5,19 @@
 > teclado** (e touch no mobile).
 
 <p align="center">
+  <a href="https://fecolinhares.github.io/match-3djs/"><img src="https://img.shields.io/badge/jogar%20agora-%2300D2FF?style=for-the-badge&logo=githubpages&logoColor=white" alt="Jogar agora"></a>
+  <a href="https://github.com/fecolinhares/match-3djs/actions"><img src="https://github.com/fecolinhares/match-3djs/actions/workflows/deploy-pages.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/fecolinhares/match-3djs" alt="License"></a>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/gameplay-desktop.png" alt="Gameplay desktop" width="640" />
   <img src="docs/screenshots/gameplay-mobile.png" alt="Gameplay mobile" width="200" />
 </p>
+
+## 🎮 Jogar online
+
+**https://fecolinhares.github.io/match-3djs/** — ou rode localmente (ver [Rodando](#-rodando)).
 
 ## 🎮 Como Jogar
 
@@ -85,6 +95,16 @@ src/
 
 Ver [DESIGN.md](DESIGN.md) — paleta de gems, tipografia, motion, iluminação e
 anti-patterns. Arquitetura em [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Veja [CONTRIBUTING.md](CONTRIBUTING.md) e o
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Bugs e features: abra uma
+[issue](https://github.com/fecolinhares/match-3djs/issues) com o template.
+
+- 🔐 Vulnerabilidades: reporte em privado via
+  [Security Advisories](https://github.com/fecolinhares/match-3djs/security/advisories/new)
+  — veja [SECURITY.md](SECURITY.md).
 
 ## 📄 Licença
 
