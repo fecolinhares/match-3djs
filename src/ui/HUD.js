@@ -136,7 +136,12 @@ export class HUD {
     this._comboLayer = document.createElement('div');
     this._comboLayer.className = 'm3d-combo-layer';
 
-    root.append(scorePanel, nextPanel, statsPanel, this._comboLayer);
+    // Grupo esquerdo: Score + Next (Next fora do board — não sobrepõe)
+    const leftGroup = document.createElement('div');
+    leftGroup.className = 'm3d-hud-left';
+    leftGroup.append(scorePanel, nextPanel);
+
+    root.append(leftGroup, statsPanel, this._comboLayer);
     this._container.appendChild(root);
     this._root = root;
   }

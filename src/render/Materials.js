@@ -195,9 +195,9 @@ export function createGemMaterial(colorIndex) {
     iridescenceIOR: 1.3,
     clearcoat: 1.0,
     clearcoatRoughness: 0.1,
-    specularIntensity: 2.2,
+    specularIntensity: 1.6, // era 2.2 — white gems estouravam (vision)
     specularColor: new THREE.Color(def[3]),
-    envMapIntensity: 1.5, // reflexos mais evidentes do RoomEnvironment
+    envMapIntensity: 1.2, // reflexos do RoomEnvironment (reduzido de 1.5)
     vertexColors: true,   // usa tintFacets (contraste de faceta garantido)
     flatShading: true,
   });

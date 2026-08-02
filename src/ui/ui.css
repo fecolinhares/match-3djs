@@ -77,6 +77,18 @@ body {
   transition: opacity 0.3s ease;
 }
 
+/* Agrupa Score + Next à esquerda (Next fora do board — não sobrepõe) */
+.m3d-hud-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* Next movido para o grupo esquerdo: .m3d-hud-next perde position center */
+.m3d-hud-next {
+  margin-top: 2px;
+}
+
 .m3d-hud--hidden {
   opacity: 0 !important;
 }
