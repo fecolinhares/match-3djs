@@ -21,7 +21,7 @@ export const COLUMN = {
   // ('mal dá pra ver caindo'). Agora nasce no topo do viewport e aparece
   // imediatamente. Game over: se o topo está cheio, canPlace() falha no
   // spawn → over=true imediato.
-  SPAWN_Y: 4,                  // VISIBLE_START — base no topo visível
+  SPAWN_Y: 6,                  // VISIBLE_START+2 — margem p/ gem superior caber
   BASE_FALL_INTERVAL: 0.55,  // segundos por célula no nível 1 (era 0.85 — lento)
   MIN_FALL_INTERVAL: 0.18,   // teto de velocidade
   LEVEL_SPEEDUP: 0.06,       // redução por nível
