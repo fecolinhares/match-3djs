@@ -34,6 +34,22 @@ app.style.overflow = 'hidden';
 app.style.background = '#0A0A12';
 
 // ------------------------------------------------------------
+// Mobile layout: zoom out + board mais alto → controles touch não
+// cobrem o tabuleiro (user: "espaço em tela para os controles").
+// Mutação de RENDER ANTES da criação de câmera/board — ambos leem
+// estes valores na init. Resolvido UMA vez (mesma regra do input).
+// ------------------------------------------------------------
+const IS_MOBILE =
+  (typeof window.matchMedia === 'function' &&
+    window.matchMedia('(pointer: coarse)').matches) ||
+  navigator.maxTouchPoints > 0 ||
+  window.innerWidth <= 768;
+if (IS_MOBILE) {
+  RENDER.CAMERA_POS[2] = RENDER.MOBILE_CAMERA_Z;
+  RENDER.BOARD_Y_OFFSET = RENDER.MOBILE_BOARD_Y_OFFSET;
+}
+
+// ------------------------------------------------------------
 // Renderer + scene
 // ------------------------------------------------------------
 const { scene, camera, renderer } = SceneManager.init(app);

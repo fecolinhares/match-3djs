@@ -67,6 +67,14 @@ export const RENDER = {
   // Board desce na tela (topo livre para o HUD DOM). Usado pelo boardGroup
   // E pelo Y_OFFSET das gems — mover juntos mantém o alinhamento.
   BOARD_Y_OFFSET: -1.9,  // z=18: respiro no fundo (peça do fundo não clippa)
+  // MOBILE (portrait): zoom out + board MAIS ALTO para os controles touch
+  // (fixed bottom, ~150px) NÃO cobrirem o tabuleiro. Aplicados no main.js
+  // (mutação de RENDER) antes de SceneManager.init/BoardMesh — ambos leem
+  // estes valores na criação. z=24 → board ~60% da altura; offset +0.6 →
+  // gap do HUD no topo E faixa inferior livre para os botões (vision:
+  // +1.2 colidiu com o HUD; 0.6 dá ~17% gap topo + ~24% inferior).
+  MOBILE_CAMERA_Z: 24,
+  MOBILE_BOARD_Y_OFFSET: 0.6,
   BLOOM_STRENGTH: 0.22,  // 0.28→0.22 — outlines das gems ficam mais nítidos
   BLOOM_RADIUS: 0.42,
   BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout
