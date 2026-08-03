@@ -169,20 +169,16 @@ export function getEmissiveColor(colorIndex) {
 /**
  * createGemMaterial(colorIndex) → THREE.MeshPhysicalMaterial
  *
- * CARTOON ARCADE — FLAT (contract TASK 2):
- *  - saturated cartoon base color (from GEM_DEFS, already vivid)
- *  - strong dark edge shading via vertexColors tintFacets
- *    (dark facets darker, light facets lighter → outlined jewel)
- *  - FLAT: NO transmission, NO iridescence, NO clearcoat, specular
- *    barely present, roughness up (0.5) → matte cartoon candy, NOT a
- *    polished 3D crystal. The bold ink look comes from the separate
- *    dark outline mesh (createOutlineMaterial), not from gloss.
- *  - envMapIntensity kept modest — a whisper of depth, no mirror shine
- *  - body is a flat TRANSLUCENT shell (opacity 0.88, no transmission):
- *    mostly-opaque painted cartoon color, with just enough see-through
- *    for the inner highlight heart to read — the same ~12% show-through
- *    the old transmission gave, but flat (no refraction distortion).
+ * JEWEL v3 (contract v3, reference image): polished faceted stone, not
+ * flat matte cartoon. Deltas from v2 flat:
+ *  - roughness 0.4 → 0.26 — faces catch light, facets read as cut stone
+ *  - specularIntensity 0.4 → 0.7 — bright edge flashes on facet planes
+ *  - envMapIntensity 0.4 → 0.6 — studio reflections give the facets depth
+ *  - emissiveIntensity 0.22 → 0.28 — inner glow present, no bloom wash
+ *  - vertexColors tintFacets kept (guaranteed per-face contrast, GPU-indep)
  *  - flatShading → faceted, not plastic-smooth
+ *  - shell stays slightly translucent (opacity 0.9) so the inner fire
+ *    heart shows through — the reference reads as a glowing cut jewel.
  *
  * Returns a FRESH material every call so per-gem match-flash emissive
  * pulses never bleed into sibling gems.
@@ -195,68 +191,75 @@ export function createGemMaterial(colorIndex) {
   return new THREE.MeshPhysicalMaterial({
     color: base,
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.22, // glow interno presente mas discreto (não lava com bloom)
-    roughness: 0.4, // 0.5→0.4: facets legíveis, ainda cartoony (não candy gloss)
+    emissiveIntensity: 0.28, // glow interno presente; bloom threshold alto evita washout
+    roughness: 0.26, // polido — facetas pegam luz como pedra cortada
     metalness: 0.0,
     transmission: 0.0, // FLAT: sem vidro/refração — corpo opaco
     transparent: true, // shell levemente translúcido p/ o coração interno
-    opacity: 0.9,      // 0.88→0.90: heart ainda aparece, facetas menos lavadas
+    opacity: 0.9,      // heart ainda aparece, facetas menos lavadas
     thickness: 1.0,
     ior: 1.45,
-    iridescence: 0.0, // FLAT: sem arco-íris de cristal
+    iridescence: 0.0, // sem arco-íris de cristal (referência é cor sólida viva)
     iridescenceIOR: 1.3,
-    clearcoat: 0.0, // FLAT: sem camada brilhante
+    clearcoat: 0.35, // leve verniz — reflexo especular brilhante da ref
     clearcoatRoughness: 0.18,
-    specularIntensity: 0.4, // 0.3→0.4: leve brilho de corte polido nas facetas
+    specularIntensity: 0.7, // flashes brilhantes nas facetas (ref: rim + highlights)
     specularColor: new THREE.Color(def[3]),
-    envMapIntensity: 0.4, // modesto — profundidade sem espelho
-    vertexColors: true,   // usa tintFacets (contorno escuro garantido)
+    envMapIntensity: 0.6, // reflexo de estúdio — profundidade de pedra real
+    vertexColors: true,   // usa tintFacets (contraste de faceta garantido)
     flatShading: true,
   });
 }
 
 /**
  * Opaque "inner fire" core material for the gem's center stone.
- * CARTOON: reads as the "highlight interno" of classic Columns gems —
- * a bright saturated heart inside the opaque flat shell. FLAT per
- * contract TASK 2: rougher + no clearcoat/iridescence so it stays a
- * solid painted heart, not a glossy droplet.
+ * JEWEL v3: the reference reads as a glowing cut jewel — the heart is
+ * the inner fire (bright saturated core seen through the shell).
+ * Brighter than v2 flat (0.45 → 0.62): the fire carries the "light
+ * from inside" look without washing the outer facets (bloom threshold
+ * stays high).
  */
 export function createCoreMaterial(colorIndex) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(def[1]),
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.45, // 0.7→0.45: coração brilhante mas sem lavar as facetas
-    roughness: 0.45, // flat — sem brilho de gota
+    emissiveIntensity: 0.62, // fire interno brilhante (ref: centro iluminado)
+    roughness: 0.35, // leve — não é gota de vidro
     metalness: 0.0,
     transmission: 0.0,
-    iridescence: 0.0, // flat
-    clearcoat: 0.0,   // flat
+    iridescence: 0.0,
+    clearcoat: 0.2,  // leve verniz no core também
     clearcoatRoughness: 0.1,
-    specularIntensity: 0.3, // flat
+    specularIntensity: 0.5,
     specularColor: new THREE.Color(def[3]),
     flatShading: true,
   });
 }
 
 /**
- * Shared bold ink outline material for cartoon gems (contract TASK 2).
- * Classic cartoon trick: a slightly scaled-up clone of the body
- * geometry rendered with BackSide + flat dark color (#1A120B) — the
- * far-side back faces poke out around the silhouette and read as a
- * thick dark outline. Shared singleton: color never changes, so one
- * material is safe for every gem (flash only touches body/core
- * emissive, never this).
+ * Shared bold RIM material for gems — color per gem (contract v3,
+ * reference image: each jewel has a COLORED bright rim, not a black
+ * ink outline). BackSide clone of the body geometry = the far-side
+ * back faces poke out around the silhouette and read as a colored
+ * light ring around every shape. Cache per colorIndex (shared between
+ * gems of the same color; flash never touches this).
  */
-let _outlineMaterial = null;
-export function createOutlineMaterial() {
-  if (_outlineMaterial) return _outlineMaterial;
-  _outlineMaterial = new THREE.MeshBasicMaterial({
-    color: 0x1a120b, // #1A120B — bold ink outline
-    side: THREE.BackSide,
-  });
-  return _outlineMaterial;
+const _outlineMaterials = new Map();
+export function createOutlineMaterial(colorIndex) {
+  const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
+  let mat = _outlineMaterials.get(colorIndex);
+  if (!mat) {
+    // Rim = cor do contorno da referência (campo 6), levemente clareada
+    // para ler como anel de luz e não como contorno chapado.
+    const rim = new THREE.Color(def[5] || def[2]);
+    mat = new THREE.MeshBasicMaterial({
+      color: rim,
+      side: THREE.BackSide,
+    });
+    _outlineMaterials.set(colorIndex, mat);
+  }
+  return mat;
 }
 
 /**

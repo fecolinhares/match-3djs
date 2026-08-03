@@ -71,9 +71,9 @@ export function isReducedMotion() {
 const SPAWN_DUR = 0.42; // elastic drop-in from above
 const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
-const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
+const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.55s — longo p/ ver quais brilham
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
-const OUTLINE_SCALE = 1.06; // 0.92×1.06=0.98 < GAP 1.0; fino p/ facetas
+const OUTLINE_SCALE = 1.10; // 0.88×1.10=0.968 < GAP 1.0 — rim colorido visível
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
@@ -110,10 +110,15 @@ function tintFacets(geometry) {
     // up weight trimmed 0.72 → 0.5 so bright crown/table faces stop
     // clamping to pure white (keeps hue alive on light gems like
     // Frost Diamond).
+    // JEWEL v3 (reference image): polished cut stone — facets must
+    // separate HARD (crown/girdle/pavilion read as distinct planes on
+    // every color). Contrast widened vs v2: top faces pop bright,
+    // down faces sink dark, side faces mid — the radial facet pattern
+    // of the reference (bright highlights + dark valleys) emerges.
     const up = Math.max(0, ny);
     const down = Math.max(0, -ny);
     const side = Math.abs(nx) * 0.5 + Math.abs(nz) * 0.5;
-    const b = 0.5 + up * 0.5 + side * 0.6 - down * 0.06; // ~0.44..1.1
+    const b = 0.42 + up * 0.62 + side * 0.55 - down * 0.12; // ~0.30..1.2
     for (let k = 0; k < 3; k++) {
       colors[(i + k) * 3] = b;
       colors[(i + k) * 3 + 1] = b;
@@ -338,9 +343,9 @@ function getBodyGeometry(shape) {
 export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
-  // scale default 0.92 p/ gems assentadas: facetas legíveis na tela
-  // (normalize 0.9 → corpo 0.83; outline 1.06 → 0.88 < GAP 1.0).
-  const scale = opts.scale ?? 0.92;
+  // scale default 0.88 p/ gems assentadas: rim colorido 1.10 cabe na
+  // célula (0.88×1.10=0.968 < GAP 1.0) e as facetas continuam legíveis.
+  const scale = opts.scale ?? 0.88;
   const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);
@@ -355,19 +360,15 @@ export function create(colorIndex, position, opts = {}) {
   const bodyGeo = getBodyGeometry(shape);
   const body = new THREE.Mesh(bodyGeo, bodyMat);
 
-  // Bold ink outline (contract TASK 2) — classic cartoon trick: a
-  // slightly scaled-up clone of the SAME body geometry rendered with
-  // BackSide + flat dark #1A120B. The far-side back faces poke out
-  // around the silhouette and read as a thick dark outline around
-  // every shape (hexagon/square/emerald/pear/brilliant/sphere).
-  // Added to the GROUP (child of the gem, not the scene) so it
-  // follows the gem's pop-in / selection / flash scale automatically;
-  // rotation.y is synced to the body in tick() so the outline hugs
-  // the silhouette as the gem idles.
-  const outline = new THREE.Mesh(bodyGeo.clone(), createOutlineMaterial());
+  // RIM colorido (contract v3, reference image) — cada jóia tem o anel
+  // de luz na cor do seu contorno (rubi vermelho, safira azul, etc.).
+  // Clone do MESMO body geometry + BackSide + cor do rim (campo 6):
+  // as back-faces aparecem ao redor da silhueta = anel colorido que
+  // define a gema contra o fundo. Adicionado ao GROUP antes do corpo
+  // para seguir pop-in/seleção/flash; rotation.y sincronizado no tick.
+  const outline = new THREE.Mesh(bodyGeo.clone(), createOutlineMaterial(colorIndex));
   outline.scale.setScalar(OUTLINE_SCALE);
-  outline.renderOrder = -1; // renderiza antes do corpo (atrás), BackSide
-                            // aparece ao redor da silhueta = outline grosso
+  outline.renderOrder = -1; // atrás do corpo — BackSide ao redor da silhueta
 
   // Inner highlight — opaque heart rendered in the opaque pass, seen
   // through the slightly-translucent flat shell (Columns "highlight
@@ -378,26 +379,25 @@ export function create(colorIndex, position, opts = {}) {
   core.rotation.y = Math.PI / 4;
   core.rotation.x = 0.3;
   const cs = coreScaleFor(shape);
-  // 1.05 → 0.92: heart slightly smaller so it stops competing with the
-  // facet shading (still reads as the Columns \"highlight interno\").
-  core.scale.set(cs[0] * 0.92, cs[1] * 0.92, cs[2] * 0.92);
+  // 0.92 → 1.0: heart volta a preencher o centro — fire interno visível
+  // (referência: centro da jóia iluminado por dentro).
+  core.scale.set(cs[0] * 1.0, cs[1] * 1.0, cs[2] * 1.0);
 
-  // Glow sprite behind the stone — SUTIL para gems assentadas.
-  // Falling gems (glowBoost) ganham glow UM POUCO maior, mas NÃO
-  // exagerado: glow enorme (2.6) + opacity alta virava orbe branco
-  // cegante (especialmente Frost Diamond). Agora discreto: a leitura
-  // da coluna caindo vem do beam + ghost, não de glow branco.
+  // Glow sprite atrás da stone — HALO COLORIDO (contract v3, ref: cada
+  // jóia tem aura na cor dominante). Subiu de 0.12/1.35 para 0.30/1.7
+  // nas gems assentadas — o halo da referência é visível, não discreto.
+  // Falling gems (glowBoost) ganham halo maior/mais forte (0.45/2.1).
   const glow = new THREE.Sprite(
     new THREE.SpriteMaterial({
       map: makeGlowTexture(),
       color: new THREE.Color(def[2]),
       transparent: true,
-      opacity: glowBoost ? 0.32 : 0.12,  // 0.18→0.12: glow suavizava outlines
+      opacity: glowBoost ? 0.45 : 0.30, // 0.12→0.30: halo da ref presente
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
   );
-  glow.scale.setScalar(glowBoost ? 1.9 : 1.35);
+  glow.scale.setScalar(glowBoost ? 2.1 : 1.7);
   glow.position.z = -0.05;
 
   // Selection ring (hidden until selected).
@@ -547,17 +547,22 @@ function tick(dt, time) {
   const selScale = 1 + u.sel * 0.15;
 
   // --- match flash ----------------------------------------------------
+  // COMBO v3 (user: "as peças que fizeram o combo brilhem, e depois
+  // sumam"): o flash é LONG (0.55s) e FORTE — emissive dispara ~×3.3,
+  // glow acende ~0.75, scale pulsa — as peças do match ficam
+  // INCONFUNDÍVEIS contra o board. Só depois (flashComplete) a gem
+  // explode e some (BoardMesh.flashMatch). Sem shake de tela.
   let flashScale = 1;
   let flashEmissive = 1;
   if (u.flashT >= 0) {
     u.flashT += dt;
     const p = clamp01(u.flashT / FLASH_DUR);
-    // 3 full sine cycles → 3 pulses; decaying envelope.
-    // Amplitude 1.6 (era 2.6) — pulso visível sem estourar emissive/glow.
-    const env = 1 - p * 0.5;
-    const wave = Math.max(0, Math.sin(p * Math.PI * 6)) * env;
-    flashEmissive = 1 + 1.6 * wave;
-    flashScale = 1 + 0.24 * wave;
+    // 3 pulsos legíveis com envelope que decai devagar — cada pulso
+    // marca as mesmas células em chamas (não um piscar rápido).
+    const env = 1 - p * 0.32;
+    const wave = Math.max(0, Math.sin(p * Math.PI * 5.5)) * env;
+    flashEmissive = 1 + 2.3 * wave;   // pico ~×3.3 — destaque claro
+    flashScale = 1 + 0.26 * wave;
     if (p >= 1) {
       u.flashT = -1;
       const done = u.flashComplete;
@@ -609,11 +614,14 @@ function tick(dt, time) {
   }
 
   // --- materials (flash) ------------------------------------------------
-  // Flash contido: multiplicador menor para não estourar emissive/glow.
-  // Bases: body 0.22 / core 0.7 (cartoon) — pico ~×2.6 sem washout.
+  // COMBO v3: flash dispara o glow do halo para ~0.75 e o sparkle acende
+  // — a célula vira um brilho colorido óbvio antes de explodir.
+  // Bases: body 0.28 / core 0.62 — pico ~×3.3 sem washout branco.
   if (u.flashT >= 0 || flashEmissive !== 1) {
-    u.body.material.emissiveIntensity = 0.22 * flashEmissive;
-    u.core.material.emissiveIntensity = 0.45 * flashEmissive;
-    u.glow.material.opacity = 0.18 + 0.3 * (flashEmissive - 1);
+    u.body.material.emissiveIntensity = 0.28 * flashEmissive;
+    u.core.material.emissiveIntensity = 0.62 * flashEmissive;
+    u.glow.material.opacity = 0.30 + 0.45 * (flashEmissive - 1); // → ~0.75
+    u.sparkle.material.opacity = Math.max(u.sparkle.material.opacity, 0.95);
+    u.sparkle.scale.setScalar(0.85 + 0.35 * (flashEmissive - 1));
   }
 }

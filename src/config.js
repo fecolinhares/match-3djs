@@ -32,20 +32,23 @@ export const COLUMN = {
 
 export const GEM_COLORS = 6; // 6 cores + wild (índice 6)
 
-// Cada cor: [nome, corBase, corEmissiva, corSpecular, forma]
+// Cada cor: [nome, corBase, corEmissiva, corSpecular, forma, rim]
 // Forma fixa por cor — reproduções EXATAS das 6 jóias da referência
-// (imagem do usuário): hexagonal (rubi), square-cut (safira),
-// emerald step-cut (esmeralda), pear apex-top (topázio),
+// (docs/reference/gems-reference.jpg): hexagonal (rubi), square-cut
+// (safira), emerald step-cut (esmeralda), pear apex-top (topázio),
 // brilliant ponta-embaixo (amatista), sphere (âmbar).
+// Campo 6 = RIM colorido (outline BackSide), cor do contorno de cada
+// jóia na referência — substitui o outline preto cartoony (v2) pelo
+// anel colorido brilhante da imagem oficial do usuário.
 // Silhouette distinta ajuda a reconhecer a cor (acessibilidade!).
 export const GEM_DEFS = [
-  ['Fire Ruby',    '#F02E4E', '#FF6A80', '#FFD6DC', 'hexagon'],   // rubi hexagonal (top-left)
-  ['Solar Topaz',  '#FF9F1C', '#FFC24D', '#FFE9BC', 'pear'],      // pêra apex-top (middle-right)
-  ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'emerald'],   // esmeralda step-cut (middle-left)
-  ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'square'],    // square-cut safira (top-right)
-  ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'brilliant'], // brilliant ponta-embaixo (bottom-left)
-  ['Frost Diamond','#9AA6BD', '#6E7A93', '#DCE4F2', 'sphere'],   // mais escura p/ outline preto aparecer (era #C9D3E2)
-  ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'brilliant'], // índice 6 — especial
+  ['Fire Ruby',    '#F02E4E', '#FF6A80', '#FFD6DC', 'hexagon',   '#FF4D6D'], // rubi hexagonal (top-left)
+  ['Solar Topaz',  '#FF9F1C', '#FFC24D', '#FFE9BC', 'pear',      '#FFC24D'], // pêra apex-top (middle-right)
+  ['Emerald',      '#1FCB6E', '#5BEA9D', '#CFF7E0', 'emerald',   '#3EE88A'], // esmeralda step-cut (middle-left)
+  ['Aquamarine',   '#00B7E6', '#4AD9F7', '#D6F8FF', 'square',    '#59CDFF'], // square-cut safira (top-right)
+  ['Amethyst',     '#9B4DE8', '#C487FF', '#F2E3FF', 'brilliant', '#CE93F0'], // brilliant ponta-embaixo (bottom-left)
+  ['Amber',        '#FF8A1E', '#FFB64D', '#FFE9C9', 'sphere',    '#FFB64D'], // âmbar esfera facetada (bottom-right)
+  ['Wild Star',    '#FFC700', '#FFE14D', '#FFF7CC', 'brilliant', '#FFD60A'], // índice 6 — especial
 ];
 
 export const SCORING = {
@@ -101,11 +104,16 @@ export const AUDIO = {
 export const TUNING = {
   EASE_FALL: [0.34, 1.2, 0.4, 1],        // cubic-bezier overshoot leve
   EASE_POP: [0.2, 1.4, 0.3, 1],
-  MATCH_FLASH_MS: 250,
-  EXPLOSION_PARTICLES: 18,
+  // 250 → 550ms: o flash de match precisa ser LONGO o bastante para o
+  // jogador VER quais peças brilham antes de sumirem (user: "as peças
+  // que fizeram o combo brilhem, e depois sumam" — 250ms era confuso).
+  MATCH_FLASH_MS: 550,
+  EXPLOSION_PARTICLES: 26,
   EXPLOSION_MS: 400,
-  SHAKE_MATCH_PX: 4,
-  SHAKE_BIG_COMBO_PX: 7,
+  SHAKE_MATCH_PX: 0,     // 4 → 0: shake de match removido (user: "o shake
+                         // da tela e só sumir está super confuso")
+  SHAKE_BIG_COMBO_PX: 0, // 7 → 0: combos grandes também sem shake —
+                         // o brilho→explosão carrega a leitura sozinho
   SHAKE_MS: 300,
   REDUCED_MOTION: false, // preenchido no runtime via matchMedia
 };
