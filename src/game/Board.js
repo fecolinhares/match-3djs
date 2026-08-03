@@ -3,7 +3,7 @@
 // Lógica pura — sem Three.js, sem DOM
 // ============================================================
 
-import { BOARD, COLUMN, GEM_COLORS } from '../config.js';
+import { BOARD, COLUMN, GEM_COLORS, SCORING } from '../config.js';
 import { MatchDetector } from './MatchDetector.js';
 import { FallingColumn } from './FallingColumn.js';
 
@@ -314,12 +314,17 @@ export class Board {
       for (const c of m.cells) allCells.add(`${c.x},${c.y}`);
     }
 
-    // Pontuação
+    // Pontuação — usa o SCORING de config (BASE_MATCH 60 + bônus por gem
+    // extra, multiplicado por combo e cascata). BUG FIX (2026-08-03):
+    // antes calculava só gemCount × combo × cascata → um match de 3 dava
+    // 3 pontos (SCORING.BASE_MATCH nunca era usado).
     const gemCount = allCells.size;
     const comboMult = this.combo > 0 ? this.combo : 1;
+    const extra = Math.max(0, gemCount - 3);
     let points = Math.round(
-      gemCount * comboMult *
-      Math.pow(2, cascadeDepth - 1)  // cascade bonus
+      (SCORING.BASE_MATCH + extra * SCORING.COMBO_MULT) *
+      comboMult *
+      Math.pow(SCORING.CASCADE_BONUS, cascadeDepth - 1) // cascade bonus
     );
     if (wildInMatch) points += 150;
     this.score += points;
