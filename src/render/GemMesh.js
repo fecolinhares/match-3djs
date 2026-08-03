@@ -16,6 +16,7 @@
 // ============================================================
 
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GEM_DEFS, TUNING } from '../config.js';
 import {
   createGemMaterial,
@@ -72,7 +73,7 @@ const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
-const OUTLINE_SCALE = 1.20; // ink outline grosso (vision: gems claras ainda soft)
+const OUTLINE_SCALE = 1.10; // 0.80×1.10=0.88 < GAP 1.0 — folga clara
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
@@ -102,13 +103,12 @@ function tintFacets(geometry) {
     // Cartoon key: top faces (normal.y > 0) catch key light → very
     // light. Down faces sink near-dark; side faces mid-dark. Wide
     // spread = strong edge/outline read on every silhouette.
-    // Contrast STRENGTHENED (contract TASK 2): up 0.7 / side 0.2 /
-    // down −0.05 → range ~0.45..1.2 (was ~0.56..1.12) — down faces
-    // near-black, top faces pop = "inked" cartoon jewel.
+    // Contrast softened slightly: down faces less black (−0.02 instead
+    // of −0.05) so small gems keep their facet detail in-game.
     const up = Math.max(0, ny);
     const down = Math.max(0, -ny);
     const side = Math.abs(nx) * 0.5 + Math.abs(nz) * 0.5;
-    const b = 0.5 + up * 0.7 + side * 0.2 - down * 0.05; // ~0.45..1.2
+    const b = 0.5 + up * 0.72 + side * 0.2 - down * 0.02; // ~0.55..1.22
     for (let k = 0; k < 3; k++) {
       colors[(i + k) * 3] = b;
       colors[(i + k) * 3 + 1] = b;
@@ -120,78 +120,118 @@ function tintFacets(geometry) {
 
 // ------------------------------------------------------------
 // Per-color silhouettes — EXACT 3D reproductions of the 6-gem
-// reference image (user-provided). Non-indexed triangle soup so
-// tintFacets tints per face.
-//   hexagon   — prisma hexagonal facetado (rubi da ref, top-left)
-//   square    — square-cut com bevel + interior estrelado (top-right)
-//   emerald   — retângulo horizontal step-cut (middle-left)
-//   pear      — pêra/triângulo com apex no topo (middle-right)
-//   brilliant — diamante brilliant-cut com ponta embaixo (bottom-left)
-//   sphere    — bola facetada (bottom-right)
+// reference image (user-provided). Each is a REAL faceted jewel
+// built from a crown (top facets) + girdle + pavilion, merged into
+// a single non-indexed triangle soup so tintFacets tints per face.
+//   hexagon   — rubi: prisma hexagonal + coroa piramidal (top-left)
+//   square    — safira: octógono com mesa + coroa step (top-right)
+//   emerald   — esmeralda: retângulo step-cut com painel (middle-left)
+//   pear      — topázio: pêra Lathe (coroa larga, apex fino) (middle-right)
+//   brilliant — amatista: brilliant-cut Lathe (mesa + ponta) (bottom-left)
+//   sphere    — âmbar: bola facetada (bottom-right)
 // ------------------------------------------------------------
+function _nonIndexed(geo) {
+  return geo.toNonIndexed ? geo.toNonIndexed() : geo;
+}
+
 export function buildBodyGeometry(shape) {
   switch (shape) {
     case 'hexagon': {
-      // Prisma hexagonal: 6 lados, topo/base achatados, facetas nas faces.
-      const geo = new THREE.CylinderGeometry(0.5, 0.5, 0.8, 6, 1);
-      geo.rotateX(Math.PI / 2); // eixo Y → Z para assentar no tabuleiro
-      return geo;
+      // Rubi hexagonal: prisma 6 lados + coroa piramidal 6 lados no topo.
+      const girdle = new THREE.CylinderGeometry(0.5, 0.5, 0.45, 6, 1);
+      girdle.rotateX(Math.PI / 2); // eixo Y → Z (assenta no tabuleiro)
+      // coroa: cone hexagonal invertido (ápice para cima, base na girdle)
+      const crown = new THREE.ConeGeometry(0.5, 0.42, 6, 1);
+      crown.rotateX(Math.PI / 2);
+      crown.translate(0, 0.42, 0); // sobre a girdle
+      const merged = mergeGeometries([girdle, crown]);
+      return _nonIndexed(merged);
     }
     case 'square': {
-      // Square-cut: cubo com cantos bevelados + facetas no topo (interior
-      // estrelado da ref) — caixa octogonal vista de cima.
-      const half = 0.42;
-      const s = new THREE.Shape();
-      // octógono: quadrado com 4 cantos cortados (beveled corners)
-      const c = 0.14;
-      s.moveTo(-half + c, -half);
-      s.lineTo(half - c, -half);
-      s.lineTo(half, -half + c);
-      s.lineTo(half, half - c);
-      s.lineTo(half - c, half);
-      s.lineTo(-half + c, half);
-      s.lineTo(-half, half - c);
-      s.lineTo(-half, -half + c);
-      s.closePath();
-      const geo = new THREE.ExtrudeGeometry(s, {
-        depth: 0.6,
-        bevelEnabled: true,
-        bevelThickness: 0.12,
-        bevelSize: 0.1,
-        bevelSegments: 3,
-        curveSegments: 4,
-      });
-      geo.translate(0, 0, -0.4); // centra
-      return geo;
+      // Safira square-cut: caixa octogonal (girdle) + mesa octogonal menor
+      // (coroa com degrau) = borda grossa + interior estrelado da ref.
+      const half = 0.46;
+      const c = 0.16;
+      const oct = (h, depth, z) => {
+        const s = new THREE.Shape();
+        s.moveTo(-half + c, -half);
+        s.lineTo(half - c, -half);
+        s.lineTo(half, -half + c);
+        s.lineTo(half, half - c);
+        s.lineTo(half - c, half);
+        s.lineTo(-half + c, half);
+        s.lineTo(-half, half - c);
+        s.lineTo(-half, -half + c);
+        s.closePath();
+        const g = new THREE.ExtrudeGeometry(s, {
+          depth,
+          bevelEnabled: true,
+          bevelThickness: h * 0.18,
+          bevelSize: h * 0.14,
+          bevelSegments: 2,
+          curveSegments: 4,
+        });
+        g.translate(0, 0, z);
+        return g;
+      };
+      const girdle = oct(half, 0.5, -0.28);
+      const mesa = oct(half * 0.62, 0.22, 0.05); // mesa menor em cima
+      const merged = mergeGeometries([girdle, mesa]);
+      return _nonIndexed(merged);
     }
     case 'emerald': {
-      // Emerald-cut: retângulo horizontal com step-facets — prisma
-      // retangular com topo em degraus (borda espessa + painel central).
-      const w = 0.78; // largo
-      const h = 0.5;  // curto (horizontal)
-      const geo = new THREE.BoxGeometry(w, h, 0.6);
-      // inclina levemente para dar leitura de "painel central"
-      return geo;
+      // Esmeralda step-cut: prisma retangular (girdle) + painel central
+      // retangular menor em cima = borda espessa + step-facets da ref.
+      const w = 0.82;
+      const h = 0.54;
+      const girdle = new THREE.BoxGeometry(w, h, 0.5);
+      girdle.translate(0, 0, 0);
+      const mesa = new THREE.BoxGeometry(w * 0.62, h * 0.55, 0.34);
+      mesa.translate(0, 0, 0.38); // painel central em degrau
+      const merged = mergeGeometries([girdle, mesa]);
+      return _nonIndexed(merged);
     }
     case 'pear': {
-      // Pear/triangle: apex no topo, base larga e curva embaixo.
-      // Usa um cone com 4 lados + escala para parecer pêra/brilhante.
-      const geo = new THREE.ConeGeometry(0.5, 1.0, 8, 1);
-      geo.translate(0, 0.1, 0); // apex sobe, base desce
-      return geo;
+      // Topázio pêra: perfil Lathe — apex FINO no topo, base LARGA e
+      // curva embaixo (ref: triangular com apex no topo, base curva).
+      // raio: começa largo na base (t=0), afina até o apex (t=1).
+      const points = [];
+      const N = 10;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N; // 0 = base, 1 = apex
+        // largura: max na base, curva que afina suavemente até ~0 no apex
+        const r = 0.52 * Math.pow(1 - t, 0.55) * (1 - 0.28 * t);
+        const y = t * 1.15 - 0.52; // de -0.52 (base) até +0.63 (apex)
+        points.push(new THREE.Vector2(Math.max(0.001, r), y));
+      }
+      const lathe = new THREE.LatheGeometry(points, 8);
+      // Lathe já gera com eixo de altura em Y — NÃO rotacionar (rotateX
+      // invertia a orientação: pear ficava com ponta embaixo).
+      return _nonIndexed(lathe);
     }
     case 'brilliant': {
-      // Brilliant-cut: octaedro esticado com ponta EMBBAIXO (borda superior
-      // larga, tip estreito). Usa OctahedronGeometry + escala forte em Y.
-      const geo = new THREE.OctahedronGeometry(0.5, 0);
-      geo.scale(1.05, 1.5, 1.0); // alto e estreito — ponta embaixo
-      return geo;
+      // Amatista brilliant-cut: perfil Lathe com MESA no topo (table),
+      // girdle e ponta embaixo (pavilhão) — silhueta clássica da ref.
+      const r0 = 0.02; // ponta do pavilhão (embaixo)
+      const r1 = 0.5;  // girdle (meio)
+      const r2 = 0.34; // mesa (topo)
+      const points = [
+        new THREE.Vector2(r0, -0.62),        // ponta embaixo
+        new THREE.Vector2(r1 * 0.55, -0.28), // pavilhão sobe
+        new THREE.Vector2(r1, -0.02),        // girdle
+        new THREE.Vector2(r1, 0.1),          // coroa base
+        new THREE.Vector2(r2, 0.32),         // coroa sobe
+        new THREE.Vector2(r2, 0.4),          // mesa
+      ];
+      const lathe = new THREE.LatheGeometry(points, 10);
+      // Lathe já gera com eixo de altura em Y — NÃO rotacionar.
+      return _nonIndexed(lathe);
     }
     case 'sphere':
     default: {
-      // Bola facetada suave — icosaedro d2 (80 faces) = ball cartoon
-      // com shading de faceta por vértice (sem vidro).
-      return new THREE.IcosahedronGeometry(0.48, 2);
+      // Bola facetada (âmbar) — icosaedro d2 (80 faces) com facetas
+      // visíveis em todos os ângulos.
+      return _nonIndexed(new THREE.IcosahedronGeometry(0.5, 2));
     }
   }
 }
@@ -199,11 +239,11 @@ export function buildBodyGeometry(shape) {
 /** Per-shape scale for the inner "highlight" core. */
 function coreScaleFor(shape) {
   switch (shape) {
-    case 'hexagon': return [0.7, 0.8, 0.7];
-    case 'square': return [0.85, 0.85, 0.7];
-    case 'emerald': return [0.9, 0.75, 0.75];
-    case 'pear': return [0.8, 1.0, 0.8];
-    case 'brilliant': return [0.85, 1.25, 0.85];
+    case 'hexagon': return [0.75, 0.8, 0.75];
+    case 'square': return [0.8, 0.8, 0.65];
+    case 'emerald': return [0.85, 0.7, 0.7];
+    case 'pear': return [0.75, 1.0, 0.75];
+    case 'brilliant': return [0.8, 1.3, 0.8];
     default: return [1, 1, 1];
   }
 }
@@ -230,9 +270,9 @@ function getBodyGeometry(shape) {
 export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
-  // scale default 0.85 p/ gems assentadas: geometria ~1.0 + outline 1.20
-  // invadia a célula vizinha (vision: 'oversized'). Falling passa 1.22.
-  const scale = opts.scale ?? 0.85;
+  // scale default 0.80 p/ gems assentadas: cabe na célula com outline
+  // (0.80×1.10=0.88 < GAP 1.0 — folga clara). Falling passa 1.10.
+  const scale = opts.scale ?? 0.80;
   const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);
