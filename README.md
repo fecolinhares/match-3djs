@@ -43,8 +43,9 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 - **6 jóias em silhuetas únicas** — rubi hexagonal, safira square-cut,
   esmeralda step-cut, topázio pêra, amatista brilliant e esfera facetada,
   cada cor com sua forma (acessibilidade visual)
-- **Estilo cartoon arcade** — gems flat com contorno ink escuro grosso,
-  outlines que seguem cada silhueta
+- **Rim colorido + halo** — reprodução fiel da [referência do usuário](docs/reference/GEMS-REFERENCE.md):
+  cada jóia tem anel de luz na cor do contorno, glow colorido e facetas
+  de alto contraste (v3 — substituiu o outline preto cartoon)
 - **Fundo de pedra/tijolo** — parede de arcade cabinet desenhada em canvas
 - **Ghost preview holograma** — formas reais da coluna em wireframe
   dashed branco mostram onde a peça vai pousar
@@ -52,7 +53,8 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
   (sem vidro refrativo)
 - **Bloom seletivo** — gems brilham, HUD não
 - **Partículas explosivas** — fragmentos, sparkles, ring shockwave
-- **Screen shake** sutil em combos grandes
+- **Combo legível** — as peças do match brilham forte (0.55s), explodem
+  e somem — sem screen shake (v3)
 - **Cascatas + combos** — multiplicadores de pontuação
 - **Wild Star** — gem especial rara com bônus
 - **HUD arcade compacto** — Score/Next/Level juntos no topo, bordas

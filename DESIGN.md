@@ -39,21 +39,25 @@ iluminação dramática) e **glass HUD** (painéis translúcidos com blur).
 
 ### Cores das Gems (6 cores + especial)
 
-Cada gem tem: **cor base**, **cor de emissão** (glow), **cor de brilho** (specular).
+Cada gem tem: **cor base**, **cor de emissão** (glow), **cor de brilho** (specular)
+e **rim** (anel colorido do contorno — v3, referência do usuário em
+`docs/reference/gems-reference.jpg`).
 
-| Gem | Cor Base | Emissão | Significado |
-|-----|----------|---------|-------------|
-| Fire Ruby | `#FF2D55` | `#FF6B81` | Vermelho quente |
-| Solar Topaz | `#FF9F0A` | `#FFC24B` | Laranja dourado |
-| Emerald | `#30D158` | `#7BE9A0` | Verde vivo |
-| Aquamarine | `#0BD1E8` | `#6FE7F5` | Ciano cristal |
-| Amethyst | `#AF52DE` | `#D9A0F5` | Roxo real |
-| Frost Diamond | `#F2F4F8` | `#FFFFFF` | Branco gelo |
-| **Wild Star** | `#FFD60A` | `#FFF3B0` | Especial (raro, bônus) |
+| Gem | Cor Base | Emissão | Rim | Significado |
+|-----|----------|---------|-----|-------------|
+| Fire Ruby | `#F02E4E` | `#FF6A80` | `#FF4D6D` | Rubi hexagonal (ref top-left) |
+| Solar Topaz | `#FF9F1C` | `#FFC24D` | `#FFC24D` | Pêra triangular apex-top (ref middle-right) |
+| Emerald | `#1FCB6E` | `#5BEA9D` | `#3EE88A` | Esmeralda step-cut (ref middle-left) |
+| Aquamarine | `#00B7E6` | `#4AD9F7` | `#59CDFF` | Safira square-cut (ref top-right) |
+| Amethyst | `#9B4DE8` | `#C487FF` | `#CE93F0` | Brilliant ponta-embaixo (ref bottom-left) |
+| Amber | `#FF8A1E` | `#FFB64D` | `#FFB64D` | Esfera facetada (ref bottom-right) |
+| **Wild Star** | `#FFC700` | `#FFE14D` | `#FFD60A` | Especial (raro, bônus) |
 
-> **Nota anti-slop**: estas NÃO são as cores "AI rainbow" padrão — cada uma tem
-> matiz deslocado e emissão própria para parecer pedra preciosa real, não cubo
-> de plástico.
+> **Nota (v3, 2026-08-03):** a cor 5 era "Frost Diamond" (branco gelo) — trocada
+> por **Amber** porque a imagem de referência do usuário mostra âmbar/laranja no
+> slot bottom-right. O outline preto cartoony foi substituído pelo **rim colorido**
+> de cada jóia (campo 6 do `GEM_DEFS`), com halo/glow colorido visível e facetas
+> de alto contraste — reprodução fiel da referência em 3D.
 
 ## 4. Tipografia
 
