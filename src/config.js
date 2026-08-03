@@ -59,11 +59,11 @@ export const SCORING = {
 export const RENDER = {
   PIXEL_RATIO: 2,
   FOV: 42,
-  CAMERA_POS: [0, 0, 20],  // era 26 — 'zoom out' deixava o board pequeno
+  CAMERA_POS: [0, 0, 18],  // z=20 → 18: células maiores, facetas legíveis
   CAMERA_LOOKAT: [0, 0, 0],  // câmera reta; board desce via BOARD_Y_OFFSET
   // Board desce na tela (topo livre para o HUD DOM). Usado pelo boardGroup
   // E pelo Y_OFFSET das gems — mover juntos mantém o alinhamento.
-  BOARD_Y_OFFSET: -1.7,  // z=20: gap HUD ok + fundo não corta (era -2.2 cortou)
+  BOARD_Y_OFFSET: -1.5,  // z=18: desce o board p/ gap HUD + fundo visível
   BLOOM_STRENGTH: 0.22,  // 0.28→0.22 — outlines das gems ficam mais nítidos
   BLOOM_RADIUS: 0.42,
   BLOOM_THRESHOLD: 0.96, // alto: só sparkles intensos brilham; evita washout

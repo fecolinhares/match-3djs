@@ -73,7 +73,7 @@ const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.25s pulse×3
 const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
-const OUTLINE_SCALE = 1.10; // 0.80×1.10=0.88 < GAP 1.0 — folga clara
+const OUTLINE_SCALE = 1.06; // 0.92×1.06=0.98 < GAP 1.0; fino p/ facetas
 
 // ------------------------------------------------------------
 // Vertex-color facet tinting — each face gets a brightness factor
@@ -103,12 +103,17 @@ function tintFacets(geometry) {
     // Cartoon key: top faces (normal.y > 0) catch key light → very
     // light. Down faces sink near-dark; side faces mid-dark. Wide
     // spread = strong edge/outline read on every silhouette.
-    // Contrast softened slightly: down faces less black (−0.02 instead
-    // of −0.05) so small gems keep their facet detail in-game.
+    // v2 (polished-jewel pass): side weight RAISED 0.2 → 0.55 so the
+    // girdle band separates from the pavilion band (crown/girdle/
+    // pavilion read as 3 distinct planes on every color), down faces
+    // deepened −0.02 → −0.06 for a darker base (but not black), and
+    // up weight trimmed 0.72 → 0.5 so bright crown/table faces stop
+    // clamping to pure white (keeps hue alive on light gems like
+    // Frost Diamond).
     const up = Math.max(0, ny);
     const down = Math.max(0, -ny);
     const side = Math.abs(nx) * 0.5 + Math.abs(nz) * 0.5;
-    const b = 0.5 + up * 0.72 + side * 0.2 - down * 0.02; // ~0.55..1.22
+    const b = 0.5 + up * 0.5 + side * 0.6 - down * 0.06; // ~0.44..1.1
     for (let k = 0; k < 3; k++) {
       colors[(i + k) * 3] = b;
       colors[(i + k) * 3 + 1] = b;
@@ -134,6 +139,29 @@ function _nonIndexed(geo) {
   return geo.toNonIndexed ? geo.toNonIndexed() : geo;
 }
 
+/**
+ * Normalize a built geometry so its LARGEST dimension ≈ target (0.9).
+ * The pear (Lathe 1.15 tall) and brilliant (~1.02 tall) were taller
+ * than the 0.80 settled scale allows and visually crossed cell rows;
+ * every shape now fits max-dim 0.9 inside the 0.80 group scale
+ * (0.80×0.9 = 0.72 core footprint, outline 0.80×0.9×1.10 = 0.79 <
+ * GAP 1.0). Uniform scale preserves silhouette proportions.
+ */
+function normalizeGeometry(geo, target = 0.9) {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  const maxDim = Math.max(
+    bb.max.x - bb.min.x,
+    bb.max.y - bb.min.y,
+    bb.max.z - bb.min.z
+  );
+  if (maxDim > 0.0001 && Math.abs(maxDim - target) > 0.001) {
+    const s = target / maxDim;
+    geo.scale(s, s, s);
+  }
+  return geo;
+}
+
 export function buildBodyGeometry(shape) {
   switch (shape) {
     case 'hexagon': {
@@ -145,7 +173,7 @@ export function buildBodyGeometry(shape) {
       crown.rotateX(Math.PI / 2);
       crown.translate(0, 0.42, 0); // sobre a girdle
       const merged = mergeGeometries([girdle, crown]);
-      return _nonIndexed(merged);
+      return normalizeGeometry(_nonIndexed(merged));
     }
     case 'square': {
       // Safira square-cut: caixa octogonal (girdle) + mesa octogonal menor
@@ -177,37 +205,77 @@ export function buildBodyGeometry(shape) {
       const girdle = oct(half, 0.5, -0.28);
       const mesa = oct(half * 0.62, 0.22, 0.05); // mesa menor em cima
       const merged = mergeGeometries([girdle, mesa]);
-      return _nonIndexed(merged);
+      return normalizeGeometry(_nonIndexed(merged));
     }
     case 'emerald': {
-      // Esmeralda step-cut: prisma retangular (girdle) + painel central
-      // retangular menor em cima = borda espessa + step-facets da ref.
+      // Esmeralda step-cut: extrude retangular CHANFRADO (cantos cortados
+      // = facetas no girdle) + mesa menor em cima. Não é uma caixa lisa:
+      // os 8 cantos cortados criam as facetas diagonais do corte.
       const w = 0.82;
-      const h = 0.54;
-      const girdle = new THREE.BoxGeometry(w, h, 0.5);
-      girdle.translate(0, 0, 0);
-      const mesa = new THREE.BoxGeometry(w * 0.62, h * 0.55, 0.34);
-      mesa.translate(0, 0, 0.38); // painel central em degrau
+      const h = 0.56;
+      const cut = 0.12; // chanfro dos cantos (facetas diagonais)
+      const rect = (ww, hh) => {
+        const s = new THREE.Shape();
+        s.moveTo(-ww / 2 + cut, -hh / 2);
+        s.lineTo(ww / 2 - cut, -hh / 2);
+        s.lineTo(ww / 2, -hh / 2 + cut);
+        s.lineTo(ww / 2, hh / 2 - cut);
+        s.lineTo(ww / 2 - cut, hh / 2);
+        s.lineTo(-ww / 2 + cut, hh / 2);
+        s.lineTo(-ww / 2, hh / 2 - cut);
+        s.lineTo(-ww / 2, -hh / 2 + cut);
+        s.closePath();
+        return s;
+      };
+      const girdle = new THREE.ExtrudeGeometry(rect(w, h), {
+        depth: 0.42,
+        bevelEnabled: true,
+        bevelThickness: 0.14,
+        bevelSize: 0.1,
+        bevelSegments: 2,
+        curveSegments: 4,
+      });
+      girdle.translate(0, 0, -0.28);
+      const mesa = new THREE.ExtrudeGeometry(rect(w * 0.6, h * 0.55), {
+        depth: 0.3,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.08,
+        bevelSegments: 2,
+        curveSegments: 4,
+      });
+      mesa.translate(0, 0, 0.12); // painel central em degrau (step-cut)
       const merged = mergeGeometries([girdle, mesa]);
-      return _nonIndexed(merged);
+      return normalizeGeometry(_nonIndexed(merged));
     }
     case 'pear': {
-      // Topázio pêra: perfil Lathe — apex FINO no topo, base LARGA e
-      // curva embaixo (ref: triangular com apex no topo, base curva).
-      // raio: começa largo na base (t=0), afina até o apex (t=1).
-      const points = [];
-      const N = 10;
-      for (let i = 0; i <= N; i++) {
-        const t = i / N; // 0 = base, 1 = apex
-        // largura: max na base, curva que afina suavemente até ~0 no apex
-        const r = 0.52 * Math.pow(1 - t, 0.55) * (1 - 0.28 * t);
-        const y = t * 1.15 - 0.52; // de -0.52 (base) até +0.63 (apex)
-        points.push(new THREE.Vector2(Math.max(0.001, r), y));
-      }
-      const lathe = new THREE.LatheGeometry(points, 8);
-      // Lathe já gera com eixo de altura em Y — NÃO rotacionar (rotateX
-      // invertia a orientação: pear ficava com ponta embaixo).
-      return _nonIndexed(lathe);
+      // Topázio pêra/triângulo: forma TRIANGULAR da ref (apex no topo,
+      // base curva). Em vez de Lathe (que parece cone liso), usa um
+      // prisma triangular extrudado + mesa triangular → facetas planas
+      // grandes e inconfundíveis (crown/coroa no topo, base em baixo).
+      const halfW = 0.5;
+      const halfH = 0.44;
+      const tri = (scale, z) => {
+        const s = new THREE.Shape();
+        s.moveTo(0, halfH * scale);            // apex no topo
+        s.lineTo(halfW * scale, -halfH * scale); // canto direito da base
+        s.lineTo(-halfW * scale, -halfH * scale); // canto esquerdo da base
+        s.closePath();
+        const g = new THREE.ExtrudeGeometry(s, {
+          depth: 0.34,
+          bevelEnabled: true,
+          bevelThickness: 0.1,
+          bevelSize: 0.09,
+          bevelSegments: 2,
+          curveSegments: 3,
+        });
+        g.translate(0, 0, z);
+        return g;
+      };
+      const body = tri(1, -0.2);
+      const mesa = tri(0.55, 0.12); // mesa triangular (coroa facetada)
+      const merged = mergeGeometries([body, mesa]);
+      return normalizeGeometry(_nonIndexed(merged));
     }
     case 'brilliant': {
       // Amatista brilliant-cut: perfil Lathe com MESA no topo (table),
@@ -225,13 +293,13 @@ export function buildBodyGeometry(shape) {
       ];
       const lathe = new THREE.LatheGeometry(points, 10);
       // Lathe já gera com eixo de altura em Y — NÃO rotacionar.
-      return _nonIndexed(lathe);
+      return normalizeGeometry(_nonIndexed(lathe));
     }
     case 'sphere':
     default: {
       // Bola facetada (âmbar) — icosaedro d2 (80 faces) com facetas
       // visíveis em todos os ângulos.
-      return _nonIndexed(new THREE.IcosahedronGeometry(0.5, 2));
+      return normalizeGeometry(_nonIndexed(new THREE.IcosahedronGeometry(0.5, 2)));
     }
   }
 }
@@ -242,7 +310,7 @@ function coreScaleFor(shape) {
     case 'hexagon': return [0.75, 0.8, 0.75];
     case 'square': return [0.8, 0.8, 0.65];
     case 'emerald': return [0.85, 0.7, 0.7];
-    case 'pear': return [0.75, 1.0, 0.75];
+    case 'pear': return [0.7, 1.0, 0.7]; // core acompanha o triângulo
     case 'brilliant': return [0.8, 1.3, 0.8];
     default: return [1, 1, 1];
   }
@@ -270,9 +338,9 @@ function getBodyGeometry(shape) {
 export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
-  // scale default 0.80 p/ gems assentadas: cabe na célula com outline
-  // (0.80×1.10=0.88 < GAP 1.0 — folga clara). Falling passa 1.10.
-  const scale = opts.scale ?? 0.80;
+  // scale default 0.92 p/ gems assentadas: facetas legíveis na tela
+  // (normalize 0.9 → corpo 0.83; outline 1.06 → 0.88 < GAP 1.0).
+  const scale = opts.scale ?? 0.92;
   const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);
@@ -310,7 +378,9 @@ export function create(colorIndex, position, opts = {}) {
   core.rotation.y = Math.PI / 4;
   core.rotation.x = 0.3;
   const cs = coreScaleFor(shape);
-  core.scale.set(cs[0] * 1.05, cs[1] * 1.05, cs[2] * 1.05);
+  // 1.05 → 0.92: heart slightly smaller so it stops competing with the
+  // facet shading (still reads as the Columns \"highlight interno\").
+  core.scale.set(cs[0] * 0.92, cs[1] * 0.92, cs[2] * 0.92);
 
   // Glow sprite behind the stone — SUTIL para gems assentadas.
   // Falling gems (glowBoost) ganham glow UM POUCO maior, mas NÃO
@@ -543,7 +613,7 @@ function tick(dt, time) {
   // Bases: body 0.22 / core 0.7 (cartoon) — pico ~×2.6 sem washout.
   if (u.flashT >= 0 || flashEmissive !== 1) {
     u.body.material.emissiveIntensity = 0.22 * flashEmissive;
-    u.core.material.emissiveIntensity = 0.7 * flashEmissive;
+    u.core.material.emissiveIntensity = 0.45 * flashEmissive;
     u.glow.material.opacity = 0.18 + 0.3 * (flashEmissive - 1);
   }
 }
