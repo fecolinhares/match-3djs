@@ -25,14 +25,18 @@ O objetivo é alinhar **3 ou mais gems da mesma cor** — na horizontal, vertica
 ou **diagonal** — para destruí-las e marcar pontos. Uma coluna de 3 gems cai do
 topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 
-| Ação | Teclado | Mouse |
-|------|---------|-------|
-| Mover coluna | `←` / `→` ou `A` / `D` | Clique na coluna |
-| Rotacionar gems | `↑` ou `W` | Clique no tabuleiro |
-| Queda rápida | `↓` ou `S` | — |
-| Queda instantânea | `Espaço` | — |
-| Pausar | `P` ou `Esc` | — |
-| Reiniciar | `R` | Botão Play Again |
+| Ação | Teclado | Mouse | Touch (mobile) |
+|------|---------|-------|----------------|
+| Mover coluna | `←` / `→` ou `A` / `D` | Clique na coluna | Botões `◀ ESQ` / `▶ DIR` |
+| Rotacionar gems | `↑` ou `W` | Clique no tabuleiro | Botão `⟳ GIRAR` |
+| Queda rápida | `↓` ou `S` | — | Botão `▼ ABAIXA` |
+| Queda instantânea | `Espaço` | — | Botão `⤓ SOLTA` |
+| Pausar | `P` ou `Esc` | — | — |
+| Reiniciar | `R` | Botão Play Again | — |
+
+> **Isolamento de input**: no desktop, apenas teclado + mouse funcionam
+> (os botões touch nem existem); no mobile, apenas os botões touch
+> funcionam (teclado físico é ignorado). Os modos nunca se misturam.
 
 ## ✨ Features
 

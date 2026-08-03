@@ -50,6 +50,13 @@ index.html → src/main.js (game loop)
 
 ### input/
 - `InputManager` emite eventos: `moveLeft`, `moveRight`, `rotate`, `softDrop`, `hardDrop`, `pause`
+- **Isolamento de modo (obrigatório)**: o modo é resolvido UMA vez
+  (`touch` se `pointer:coarse` ou `maxTouchPoints>0`, senão `keyboard`)
+  e passado para InputManager E TouchControls — os dois nunca ficam
+  ativos juntos:
+  - `keyboard` (desktop): keydown registrado; touch pointer ignorado
+  - `touch` (mobile): keydown NEM é registrado (teclado físico externo
+    não controla); botões do TouchControls são os únicos controles
 - Teclado: ←/→ move, ↑ rotaciona, ↓ soft drop, Espaço hard drop, P pause
 - Mouse: clique na coluna move pra lá, clique no tabuleiro = rotacionar na coluna, hover mostra preview
 
@@ -57,6 +64,13 @@ index.html → src/main.js (game loop)
 - `HUD.update(score, level, lines, combo)` — DOM
 - `HUD.setNextPreview(colors[3])` — mini coluna preview
 - `Menu.show('menu'|'gameover', { score, best })` — overlay glass
+- `TouchControls` (mobile): botões ◀ ▶ ⟳ ▼ ⤓ (ESQ/DIR/GIRAR/ABAIXA/SOLTA)
+  color-coded, visíveis SÓ em modo touch; em desktop não são nem criados
+- **Gems são jóias facetadas reais** (GemMesh): cada cor tem silhueta de
+  corte (crown + girdle + pavilion) via mergeGeometries:
+  hexagon (rubi) / square (safira) / emerald (esmeralda) / pear (topázio) /
+  brilliant (amatista) / sphere (âmbar); `toNonIndexed()` garante que o
+  tintFacets (cores por faceta) funcione
 
 ### audio/
 - `AudioManager.play(name)` — nomes: `move`, `rotate`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
