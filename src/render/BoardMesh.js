@@ -43,9 +43,16 @@ const FALLING_SCALE = 0.92;
 // (bottom VISIBLE_ROWS rows) centers on the camera look-at height.
 // Auto-derived from BOARD: VISIBLE_START = ROWS - VISIBLE_ROWS.
 const VISIBLE_START = ROWS - VISIBLE_ROWS; // 4
-const VISIBLE_MID = VISIBLE_START + (VISIBLE_ROWS - 1) / 2; // 9.5
-const Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0);
+const VISIBLE_MID = VISIBLE_START + (VISIBLE_ROWS - 1) / 2; // 8.5
+// Y_OFFSET NÃO é constante de módulo: é calculado no CONSTRUCTOR.
+// BUG FIX (2026-08-03): o main.js muta RENDER.BOARD_Y_OFFSET para o
+// layout mobile ANTES de criar o BoardMesh, mas constantes de módulo
+// ES são avaliadas no import (hoisted) — com o valor antigo (-1.9) —
+// enquanto boardGroup.position.y (constructor) lia o valor mutado
+// (+0.6) → gems desalinhadas 2.5u da moldura ("itens passando do
+// board e indo para baixo da tela").
 const X_OFFSET = -((COLS - 1) / 2) * GAP;
+let Y_OFFSET = 0; // setado no constructor (usa RENDER mutado)
 
 function cellToWorld(x, y) {
   return new THREE.Vector3(X_OFFSET + x * GAP, -(y * GAP) + Y_OFFSET, 0);
@@ -293,6 +300,11 @@ export class BoardMesh {
     this._vanishing = []; // groups shrinking out
     this._gemGroup = new THREE.Group();
     scene.add(this._gemGroup);
+
+    // Y_OFFSET calculado AQUI (constructor) — o main.js já mutou
+    // RENDER.BOARD_Y_OFFSET (layout mobile). Como o módulo é avaliado
+    // no import (antes da mutação), não pode ser constante de módulo.
+    Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0);
 
     // --- board surface -------------------------------------------------
     const boardW = COLS * GAP;
