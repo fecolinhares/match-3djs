@@ -72,7 +72,7 @@ const SPAWN_DUR = 0.42; // elastic drop-in from above
 const FALL_DUR = 0.35; // gravity drop (elastic overshoot)
 const MOVE_DUR = 0.08; // horizontal column move (snappy)
 const FLASH_DUR = TUNING.MATCH_FLASH_MS / 1000; // 0.55s — longo p/ ver quais brilham
-const IDLE_ROT_SPEED = 0.35; // rad/s, disabled under reduced motion
+// idle usa OSCILAÇÃO sin (±0.35 rad), não giro 360° (ver tick)
 const OUTLINE_SCALE = 1.10; // 0.88×1.10=0.968 < GAP 1.0 — rim colorido visível
 
 // ------------------------------------------------------------
@@ -264,9 +264,11 @@ export function buildBodyGeometry(shape) {
     }
     case 'pear': {
       // Topázio pêra/triângulo: forma TRIANGULAR da ref (apex no topo,
-      // base curva). Em vez de Lathe (que parece cone liso), usa um
-      // prisma triangular extrudado + mesa triangular → facetas planas
-      // grandes e inconfundíveis (crown/coroa no topo, base em baixo).
+      // base curva). Prisma triangular extrudado + mesa triangular.
+      // depth 0.34 → 0.62 (BUG FIX 2026-08-03): o extrude fino virava
+      // uma "lasca/slab" de perfil ao girar 90° em Y (user: "a amarela
+      // fica estranha quando ela roda"). Mais grosso = joia encorpada
+      // em qualquer ângulo, mantendo a silhueta triangular de frente.
       const halfW = 0.5;
       const halfH = 0.44;
       const tri = (scale, z) => {
@@ -276,18 +278,18 @@ export function buildBodyGeometry(shape) {
         s.lineTo(-halfW * scale, -halfH * scale); // canto esquerdo da base
         s.closePath();
         const g = new THREE.ExtrudeGeometry(s, {
-          depth: 0.34,
+          depth: 0.62,
           bevelEnabled: true,
-          bevelThickness: 0.1,
-          bevelSize: 0.09,
-          bevelSegments: 2,
-          curveSegments: 3,
+          bevelThickness: 0.12,
+          bevelSize: 0.1,
+          bevelSegments: 3,
+          curveSegments: 4,
         });
         g.translate(0, 0, z);
         return g;
       };
-      const body = tri(1, -0.2);
-      const mesa = tri(0.55, 0.12); // mesa triangular (coroa facetada)
+      const body = tri(1, -0.22);
+      const mesa = tri(0.55, 0.16); // mesa triangular (coroa facetada)
       const merged = mergeGeometries([body, mesa]);
       return normalizeGeometry(_nonIndexed(merged));
     }
@@ -591,10 +593,15 @@ function tick(dt, time) {
   }
   group.scale.setScalar(selScale * flashScale * u.popScale * u.scaleBoost);
 
-  // idle rotation (skip under reduced motion)
+  // idle "rotation" — OSCILAÇÃO suave (sin ±20°), não giro 360°.
+  // BUG FIX (2026-08-03, user: "a amarela fica estranha quando ela
+  // roda"): a pear (e square/emerald) são extrusões finas em z — ao
+  // girar 90° em Y a silhueta virava "lasca/slab". Balanço ±0.35rad
+  // mantém a face principal visível (padrão match-3: gems balançam).
+  // Outline sincronizado abaixo.
   if (!u.reduced) {
-    u.body.rotation.y += dt * IDLE_ROT_SPEED;
-    u.core.rotation.y -= dt * IDLE_ROT_SPEED * 0.6;
+    u.body.rotation.y = Math.sin(time * 1.2 + u.base.x * 1.7) * 0.35;
+    u.core.rotation.y = -Math.sin(time * 0.9 + u.base.x * 1.7) * 0.25;
   }
   // outline hugs the body silhouette as the gem idles (same geometry,
   // same axis) — under reduced motion neither rotates, still aligned.
