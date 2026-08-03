@@ -43,8 +43,18 @@ Particles.init?.(scene);
 // ------------------------------------------------------------
 const audio = new AudioManager();
 
+// Modo de input resolvido UMA vez (isolamento touch vs keyboard).
+// TouchControls e InputManager usam o MESMO modo → nunca os dois ativos.
+const inputMode =
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(pointer: coarse)').matches
+    ? 'touch'
+    : navigator.maxTouchPoints > 0
+      ? 'touch'
+      : 'keyboard';
+
 const hud = new HUD({ container: app });
-const touchControls = new TouchControls({ container: app });
+const touchControls = new TouchControls({ container: app, mode: inputMode });
 const menu = new Menu({
   container: app,
   onStart: () => startGame(),
@@ -160,6 +170,7 @@ function updateHUD() {
 // ------------------------------------------------------------
 const input = new InputManager({
   currentColumn: null,
+  mode: inputMode, // mesmo modo do TouchControls — isolamento garantido
 });
 
 input.on('moveLeft', () => {

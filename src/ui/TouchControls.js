@@ -16,11 +16,26 @@ export class TouchControls {
   /**
    * @param {Object} [opts]
    * @param {HTMLElement|null} [opts.container] Elemento pai (default: #app).
+   * @param {'auto'|'touch'|'keyboard'} [opts.mode] Mesmo modo do
+   *        InputManager: 'touch' mostra os botões; 'keyboard' NÃO monta
+   *        nada (isolamento — no desktop os botões não existem).
    */
-  constructor({ container = null } = {}) {
+  constructor({ container = null, mode = 'auto' } = {}) {
     this._container = container || document.getElementById('app') || document.body;
     this._listeners = new Map();
-    this._build();
+
+    // Isolamento: em modo keyboard (desktop), os botões NÃO são criados.
+    let resolved = mode;
+    if (resolved === 'auto') {
+      const coarse =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(pointer: coarse)').matches;
+      const maxTouch = navigator.maxTouchPoints > 0;
+      resolved = coarse || maxTouch ? 'touch' : 'keyboard';
+    }
+    this._isTouch = resolved === 'touch';
+
+    if (this._isTouch) this._build();
   }
 
   on(name, callback) {
@@ -101,18 +116,8 @@ export class TouchControls {
     root.append(moveRow, actRow);
     this._container.appendChild(root);
     this._root = root;
-
-    // Só mostrar se for touch (pointer:coarse) — o CSS também esconde
-    // por padrão; isto é um fallback defensivo.
-    if (typeof window.matchMedia === 'function') {
-      const coarse = window.matchMedia('(pointer: coarse)');
-      const apply = () => { root.classList.toggle('m3d-touch-controls--visible', coarse.matches); };
-      apply();
-      if (typeof coarse.addEventListener === 'function') {
-        coarse.addEventListener('change', apply);
-        this._unlistenMedia = () => coarse.removeEventListener('change', apply);
-      }
-    }
+    // Modo touch garantido no constructor — botões visíveis direto.
+    root.classList.add('m3d-touch-controls--visible');
   }
 
   show() {
@@ -125,8 +130,10 @@ export class TouchControls {
 
   destroy() {
     this._unlistenMedia?.();
-    for (const btn of this._buttons) {
-      btn.removeEventListener('pointerdown', () => {});
+    if (this._buttons) {
+      for (const btn of this._buttons) {
+        btn.removeEventListener('pointerdown', () => {});
+      }
     }
     this._root?.remove();
     this._listeners.clear();

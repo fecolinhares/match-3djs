@@ -36,12 +36,29 @@ export class InputManager {
    *        Retângulo do tabuleiro em px de cliente (getBoundingClientRect).
    *        Se ausente, tenta descobrir via canvas; fallback = viewport.
    * @param {number|null} [opts.currentColumn] Coluna da peça caindo (game informa).
+   * @param {'auto'|'touch'|'keyboard'} [opts.mode] Modo de input FORÇADO.
+   *        'auto' (default) detecta pelo hardware:
+   *          touch (pointer:coarse)  → SÓ touch/swipe (teclado desativado)
+   *          keyboard (pointer:fine) → SÓ teclado/mouse (touch desativado)
+   *        Isolamento TOTAL: o modo não-ativo NÃO emite eventos.
    */
-  constructor({ boardRect = null, currentColumn = null } = {}) {
+  constructor({ boardRect = null, currentColumn = null, mode = 'auto' } = {}) {
     this._listeners = new Map();
     this._boardRect = boardRect;
     this._currentColumn = currentColumn;
     this._lastHover = undefined;
+
+    // Detecção de modo: touch (mobile) vs keyboard (desktop). Exclusivo.
+    if (mode === 'auto') {
+      const coarse =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(pointer: coarse)').matches;
+      const maxTouch = navigator.maxTouchPoints > 0;
+      this._mode = coarse || maxTouch ? 'touch' : 'keyboard';
+    } else {
+      this._mode = mode === 'touch' ? 'touch' : 'keyboard';
+    }
+    this._isTouch = this._mode === 'touch';
 
     this._pointer = {
       id: null,
@@ -60,6 +77,11 @@ export class InputManager {
     this._onMouseLeave = this._onMouseLeave.bind(this);
 
     this._attach();
+  }
+
+  /** Modo ativo: 'touch' | 'keyboard' (para a UI decidir visibilidade). */
+  get mode() {
+    return this._mode;
   }
 
   /* ---------------- Eventos ---------------- */
@@ -102,6 +124,8 @@ export class InputManager {
   /* ---------------- Teclado ---------------- */
 
   _onKeyDown(e) {
+    // Isolamento: em modo touch (mobile), teclado NÃO ativa.
+    if (this._isTouch) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const code = e.code;
     // Repetição automática só para ações contínuas (mover / soft drop).
@@ -133,6 +157,8 @@ export class InputManager {
   /* ---------------- Ponteiro (mouse + touch) ---------------- */
 
   _onPointerDown(e) {
+    // Isolamento: em modo keyboard (desktop), touch NÃO ativa.
+    if (!this._isTouch && e.pointerType === 'touch') return;
     const p = this._pointer;
     p.id = e.pointerId;
     p.active = true;
@@ -143,8 +169,9 @@ export class InputManager {
 
   _onPointerMove(e) {
     if (e.pointerId !== this._pointer.id) {
-      // Hover também funciona sem botão pressionado (mouse).
-      if (e.pointerType === 'mouse') this._updateHover(e.clientX, e.clientY);
+      // Hover também funciona sem botão pressionado (mouse) — só em
+      // modo keyboard; em touch não há hover útil.
+      if (e.pointerType === 'mouse' && !this._isTouch) this._updateHover(e.clientX, e.clientY);
       return;
     }
     const p = this._pointer;
@@ -235,7 +262,11 @@ export class InputManager {
   /* ---------------- Ciclo de vida ---------------- */
 
   _attach() {
-    window.addEventListener('keydown', this._onKeyDown);
+    // Isolamento real: em modo touch, o keydown nem é registrado
+    // (teclado físico externo não controla o mobile).
+    if (!this._isTouch) {
+      window.addEventListener('keydown', this._onKeyDown);
+    }
     window.addEventListener('pointerdown', this._onPointerDown);
     window.addEventListener('pointermove', this._onPointerMove);
     window.addEventListener('pointerup', this._onPointerUp);
