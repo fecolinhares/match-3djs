@@ -343,9 +343,10 @@ function getBodyGeometry(shape) {
 export function create(colorIndex, position, opts = {}) {
   const def = GEM_DEFS[colorIndex] ?? GEM_DEFS[GEM_DEFS.length - 1];
   const group = new THREE.Group();
-  // scale default 0.88 p/ gems assentadas: rim colorido 1.10 cabe na
-  // célula (0.88×1.10=0.968 < GAP 1.0) e as facetas continuam legíveis.
-  const scale = opts.scale ?? 0.88;
+  // scale default 0.84 p/ gems assentadas: rim colorido 1.10 cabe folgado
+  // na célula (0.84×1.10=0.924 < GAP 1.0 — folga ~0.076 p/ mobile não ler
+  // overlap; 0.88 deixava rims quase tocando vizinhos).
+  const scale = opts.scale ?? 0.84;
   const glowBoost = Boolean(opts.glowBoost);
 
   const bodyMat = createGemMaterial(colorIndex);

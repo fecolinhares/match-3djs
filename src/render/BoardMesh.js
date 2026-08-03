@@ -29,9 +29,14 @@ import {
 
 const { GAP, COLS, ROWS, VISIBLE_ROWS } = BOARD;
 
-// Falling gems são ~10% maiores que as assentadas (0.85) — leitura da
-// peça ativa sem invadir as células vizinhas (era 1.22 — 'oversized').
-const FALLING_SCALE = 1.10;
+// Falling gems são ~13% maiores que as assentadas (0.84) — leitura da
+// peça ativa sem invadir as células vizinhas. ANTES 1.10: com o rim
+// colorido 1.10 o footprint virava 1.10×1.10=1.21 > GAP 1.0 — rims da
+// pilha caindo se tocavam (vision mobile: "gems touching/overlapping").
+// 0.95 → 0.92: 0.92×1.10 = 1.012 (overlap vertical residual 0.012 —
+// rims da pilha caindo deixam de se tocar; vision: "packed very
+// tightly" → folga visível). Ainda maior que 0.84×1.10=0.924 → lê "ativa".
+const FALLING_SCALE = 0.92;
 
 // Grid → world mapping. Logic y=0 is the TOP (spawn zone, off-screen);
 // 3D y grows upward, so we flip and offset so the visible band
