@@ -271,15 +271,14 @@ touchControls.on('hardDrop', () => {
 function update(dt) {
   if (!game) return;
 
-  const events = game.update(dt);
-
-  // Dirige eventos (match → flash; enquanto resolve, não sync)
-  for (const ev of events) {
-    if (ev.type === 'match') {
-      matchResolving = true;
-    }
-    handleGameEvent(ev);
-  }
+  // game.update() JÁ emite 'onEvent' para cada evento (via callback) →
+  // handleGameEvent processa TUDO uma única vez. NÃO iterar os events
+  // retornados AQUI: processaria cada evento 2x — o match dispararia
+  // flashMatch duas vezes no mesmo tick, o 2º setFlash sobrescreveria
+  // os callbacks do 1º, flashCount nunca zeraria e o sync pós-flash
+  // (que aplica a gravidade visual) nunca rodaria → gems acima do
+  // combo não caíam (bug reportado: "a fileira acima não cai").
+  game.update(dt);
 
   // Reconcile board com game snapshot — mas NÃO durante explosão de match
   if (!matchResolving) {
