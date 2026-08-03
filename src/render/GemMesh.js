@@ -170,14 +170,23 @@ function normalizeGeometry(geo, target = 0.9) {
 export function buildBodyGeometry(shape) {
   switch (shape) {
     case 'hexagon': {
-      // Rubi hexagonal: prisma 6 lados + coroa piramidal 6 lados no topo.
-      const girdle = new THREE.CylinderGeometry(0.5, 0.5, 0.45, 6, 1);
-      girdle.rotateX(Math.PI / 2); // eixo Y → Z (assenta no tabuleiro)
-      // coroa: cone hexagonal invertido (ápice para cima, base na girdle)
+      // Rubi hexagonal — prisma hexagonal VERTICAL alto + coroa piramidal
+      // NO TOPO + pavilhão piramidal EMBAIXO (pontas em cima E embaixo,
+      // como a referência: "tall hexagonal silhouette with pointed top
+      // and bottom vertices").
+      // ANTES (bug visual): girdle deitado com rotateX(PI/2) (eixo em z,
+      // apontando para a câmera) + cone na frente → de frente virava
+      // "seções empilhadas com waist/seam" (vision: formato estranho).
+      // Agora o eixo é Y (vertical) — câmera em +z vê as 6 faces laterais.
+      const girdle = new THREE.CylinderGeometry(0.5, 0.5, 0.6, 6, 1); // eixo Y
+      // coroa: pirâmide hexagonal com ápice em +Y, base encaixada no topo
       const crown = new THREE.ConeGeometry(0.5, 0.42, 6, 1);
-      crown.rotateX(Math.PI / 2);
-      crown.translate(0, 0.42, 0); // sobre a girdle
-      const merged = mergeGeometries([girdle, crown]);
+      crown.translate(0, 0.51, 0); // base (0.30) no topo da girdle (0.30)
+      // pavilhão: pirâmide hexagonal invertida (ponta para baixo)
+      const pavilion = new THREE.ConeGeometry(0.5, 0.42, 6, 1);
+      pavilion.rotateX(Math.PI); // ápice vira -Y
+      pavilion.translate(0, -0.51, 0); // base (-0.30) no fundo da girdle (-0.30)
+      const merged = mergeGeometries([girdle, crown, pavilion]);
       return normalizeGeometry(_nonIndexed(merged));
     }
     case 'square': {
