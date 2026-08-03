@@ -17,7 +17,7 @@ import { HUD } from './ui/HUD.js';
 import { Menu } from './ui/Menu.js';
 import { TouchControls } from './ui/TouchControls.js';
 import { AudioManager } from './audio/AudioManager.js';
-import { BOARD, RENDER, TUNING } from './config.js';
+import { BOARD, RENDER } from './config.js';
 
 // ------------------------------------------------------------
 // Setup DOM
@@ -82,9 +82,9 @@ function startGame() {
         }
         const snap = game.snapshot();
         hud.update(snap.score, snap.level, snap.lines, snap.combo);
-        // screen shake em matches
-        const amp = combo > 2 ? TUNING.SHAKE_BIG_COMBO_PX : TUNING.SHAKE_MATCH_PX;
-        shake = { t: 0, dur: TUNING.SHAKE_MS / 1000, amp };
+        // Sem screen shake no match (user: "o shake da tela e só sumir
+        // está super confuso"). O destaque agora vem do flash forte das
+        // peças do combo (brilham → explodem) — câmera fica estável.
       },
       onLevelUp: (n) => {
         audio.play('levelup');

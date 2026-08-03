@@ -656,10 +656,24 @@ export class BoardMesh {
   // ------------------------------------------------------------
   // Match flash + explode
   // ------------------------------------------------------------
-  flashMatch(cells, onComplete) {
-    const gems = cells
-      .map(({ x, y }) => this._gems.get(`${x},${y}`))
-      .filter(Boolean);
+  /**
+   * flashMatch(matches, onComplete)
+   * matches = [{ cells: [{x,y},...], color }] — formato do engine
+   * (MatchDetector.findMatches). BUG FIX (2026-08-03): antes o método
+   * esperava [{x,y}] direto e mapeava undefined → nenhuma gem era
+   * encontrada → flash/explosão NUNCA rodavam; o jogador só via o
+   * shake + gems sumindo (exatamente o que o user reportou como
+   * confuso). Agora aplana os cells dos matches, deduplica e dispara
+   * o flash em cada gem: BRILHAM (0.55s forte) → explodem → somem.
+   */
+  flashMatch(matches, onComplete) {
+    const gems = [];
+    for (const m of matches) {
+      for (const c of m.cells ?? []) {
+        const g = this._gems.get(`${c.x},${c.y}`);
+        if (g && !gems.includes(g)) gems.push(g);
+      }
+    }
     if (gems.length === 0) {
       if (onComplete) onComplete();
       return;
@@ -686,11 +700,12 @@ export class BoardMesh {
       gem.userData.tick(dt, time);
     }
 
-    // shrinking-out gems
+    // shrinking-out gems — 0.16 → 0.22s: o sumir pós-explosão é mais
+    // suave (a explosão de partículas já carrega o destaque)
     for (let i = this._vanishing.length - 1; i >= 0; i--) {
       const gem = this._vanishing[i];
       const u = gem.userData;
-      u.vanishT += dt / 0.16;
+      u.vanishT += dt / 0.22;
       const p = Math.min(1, u.vanishT);
       gem.scale.setScalar(Math.max(0.001, (1 - GemMesh.easeOutCubic(p)) * u.scaleBoost));
       if (p >= 1) {
