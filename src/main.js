@@ -25,7 +25,11 @@ import { BOARD, RENDER } from './config.js';
 const app = document.getElementById('app');
 app.style.position = 'relative';
 app.style.width = '100vw';
-app.style.height = '100vh';
+// Mobile: 100vh inclui a área atrás da barra de endereço do browser →
+// o fundo do app fica escondido e os botões touch (absolute bottom)
+// saem da tela ("controles tão pra baixo que vão para fora").
+// 100dvh = altura visível dinâmica (fallback 100vh p/ browsers antigos).
+app.style.height = '100dvh';
 app.style.overflow = 'hidden';
 app.style.background = '#0A0A12';
 
