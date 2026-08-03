@@ -56,7 +56,9 @@ index.html → src/main.js (game loop)
   ativos juntos:
   - `keyboard` (desktop): keydown registrado; touch pointer ignorado
   - `touch` (mobile): keydown NEM é registrado (teclado físico externo
-    não controla); botões do TouchControls são os únicos controles
+    não controla); os listeners de pointer NÃO são registrados — taps/
+    swipes no board são ignorados; botões do TouchControls são os únicos
+    controles
 - Teclado: ←/→ move, ↑ rotaciona, ↓ soft drop, Espaço hard drop, P pause
 - Mouse: clique na coluna move pra lá, clique no tabuleiro = rotacionar na coluna, hover mostra preview
 

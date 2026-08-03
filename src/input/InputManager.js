@@ -8,11 +8,14 @@
 //            P/Escape pause, R restart
 //   mouse:   clique na coluna move a peça pra lá; clique na coluna
 //            atual rotaciona; hover emite preview
-//   touch:   swipe ←/→ move, swipe ↑ rotaciona, swipe ↓ soft drop
+//   touch:   NENHUM controle no board — SÓ os botões em tela
+//            (TouchControls emitem os mesmos eventos discretos).
+//            Cliques/taps/swipes no tabuleiro são IGNORADOS
+//            (user: "controles apenas pelos botões em tela").
 //
 // Extensões (documentadas para o main.js):
 //   'restart' (tecla R)
-//   'moveTo'  (coluna)   — clique em outra coluna
+//   'moveTo'  (coluna)   — clique em outra coluna (só desktop)
 //   'hover'   (coluna|null) — coluna sob o ponteiro, p/ preview
 //
 // API: on(name, cb) -> unsubscribe, off, setBoardRect(rect),
@@ -262,11 +265,15 @@ export class InputManager {
   /* ---------------- Ciclo de vida ---------------- */
 
   _attach() {
-    // Isolamento real: em modo touch, o keydown nem é registrado
-    // (teclado físico externo não controla o mobile).
-    if (!this._isTouch) {
-      window.addEventListener('keydown', this._onKeyDown);
-    }
+    // Isolamento TOTAL por modo:
+    //  - touch (mobile): NENHUM listener de ponteiro — taps/swipes no
+    //    board são ignorados; os ÚNICOS controles são os botões em tela
+    //    (TouchControls, classe separada com listeners próprios nos
+    //    botões). O teclado físico externo também não controla.
+    //  - keyboard (desktop): teclado + mouse (clique moveTo/rotate,
+    //    hover preview, swipe de mouse não faz nada útil).
+    if (this._isTouch) return;
+    window.addEventListener('keydown', this._onKeyDown);
     window.addEventListener('pointerdown', this._onPointerDown);
     window.addEventListener('pointermove', this._onPointerMove);
     window.addEventListener('pointerup', this._onPointerUp);

@@ -35,8 +35,9 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 | Reiniciar | `R` | Botão Play Again | — |
 
 > **Isolamento de input**: no desktop, apenas teclado + mouse funcionam
-> (os botões touch nem existem); no mobile, apenas os botões touch
-> funcionam (teclado físico é ignorado). Os modos nunca se misturam.
+> (os botões touch nem existem); no mobile, **apenas os botões touch**
+> controlam o jogo — cliques/taps/swipes no tabuleiro são ignorados e o
+> teclado físico é desativado. Os modos nunca se misturam.
 
 ## ✨ Features
 
