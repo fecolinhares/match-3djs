@@ -196,18 +196,18 @@ export function createGemMaterial(colorIndex) {
     color: base,
     emissive: new THREE.Color(def[2]),
     emissiveIntensity: 0.22, // glow interno presente mas discreto (não lava com bloom)
-    roughness: 0.5, // flat cartoon — matte, sem candy gloss
+    roughness: 0.4, // 0.5→0.4: facets legíveis, ainda cartoony (não candy gloss)
     metalness: 0.0,
     transmission: 0.0, // FLAT: sem vidro/refração — corpo opaco
     transparent: true, // shell levemente translúcido p/ o coração interno
-    opacity: 0.88,     // aparece o heart (~12% see-through, flat, sem refração)
+    opacity: 0.9,      // 0.88→0.90: heart ainda aparece, facetas menos lavadas
     thickness: 1.0,
     ior: 1.45,
     iridescence: 0.0, // FLAT: sem arco-íris de cristal
     iridescenceIOR: 1.3,
     clearcoat: 0.0, // FLAT: sem camada brilhante
     clearcoatRoughness: 0.18,
-    specularIntensity: 0.3, // FLAT: só um toque de luz especular
+    specularIntensity: 0.4, // 0.3→0.4: leve brilho de corte polido nas facetas
     specularColor: new THREE.Color(def[3]),
     envMapIntensity: 0.4, // modesto — profundidade sem espelho
     vertexColors: true,   // usa tintFacets (contorno escuro garantido)
@@ -227,7 +227,7 @@ export function createCoreMaterial(colorIndex) {
   return new THREE.MeshPhysicalMaterial({
     color: new THREE.Color(def[1]),
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.7, // coração brilhante — highlight interno cartoon
+    emissiveIntensity: 0.45, // 0.7→0.45: coração brilhante mas sem lavar as facetas
     roughness: 0.45, // flat — sem brilho de gota
     metalness: 0.0,
     transmission: 0.0,
