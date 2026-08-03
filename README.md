@@ -60,6 +60,9 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 - **Wild Star** — gem especial rara com bônus
 - **HUD arcade compacto** — Score/Next/Level juntos no topo, bordas
   douradas, sombras duras cartoon
+- **Layout mobile com espaço para os controles** — zoom out da câmera
+  + board mais alto: os botões touch ficam numa faixa inferior livre,
+  sem cobrir o tabuleiro (gap ~85-90px)
 - **Audio sintetizado** — WebAudio, zero arquivos externos
 - **Reduced motion** respeitado (`prefers-reduced-motion`)
 - **Controles** — mouse, teclado e touch (mobile-first)
