@@ -47,9 +47,12 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 - **Rim colorido + halo** — reprodução fiel da [referência do usuário](docs/reference/GEMS-REFERENCE.md):
   cada jóia tem anel de luz na cor do contorno, glow colorido e facetas
   de alto contraste (v3 — substituiu o outline preto cartoon)
-- **Fundo de pedra/tijolo** — parede de arcade cabinet desenhada em canvas
-- **Ghost preview holograma** — formas reais da coluna em wireframe
-  dashed branco mostram onde a peça vai pousar
+- **Fundo de pedra/tijolo** — parede de arcade cabinet em canvas,
+  tijolos escuros desaturados (marrom-acinzentado) para o board e as
+  gems serem o foco visual (v2: antiga paleta tan/ouro clara competia)
+- **Ghost preview discreto** — formas reais da coluna em wireframe
+  dashed branco ATRÁS das gems caindo (z -0.4), bem sutil, mostram
+  onde a peça vai pousar sem competir com a peça ativa
 - **Iluminação cartoon** — key quente + fill suave, shading por faceta
   (sem vidro refrativo)
 - **Bloom seletivo** — gems brilham, HUD não
