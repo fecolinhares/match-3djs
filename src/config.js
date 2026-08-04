@@ -103,7 +103,7 @@ export const AUDIO = {
     softdrop: { type: 'square',   freq: 210,  dur: 0.035, vol: 0.13 },
     land:     { type: 'sine',     freq: 160,  dur: 0.12,  vol: 0.34 },
     match:    { type: 'sine',     freq: 523,  dur: 0.42,  vol: 0.32 },
-    combo:    { type: 'sine',     freq: 523,  dur: 0.16,  vol: 0.34 },
+    combo:    { type: 'sine',     freq: 523,  dur: 0.16,  vol: 0.4 },
     levelup:  { type: 'triangle', freq: 523,  dur: 0.2,   vol: 0.45 },
     gameover: { type: 'triangle', freq: 330,  dur: 0.2,   vol: 0.42 },
     select:   { type: 'sine',     freq: 640,  dur: 0.05,  vol: 0.22 },

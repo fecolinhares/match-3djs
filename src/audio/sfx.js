@@ -77,16 +77,26 @@ export function renderSfx(ctx, out, name, { pitch = 1, combo = 0, at = 0, base =
       break;
     }
     case 'combo': {
+      // Arpejo pentatônico ascendente com RITMO QUE ACELERA (60→45ms) e
+      // chimes ricos (4 partials, corpo 0.22s) — o combo deve EVOLUIR o
+      // match, não soar como um eco fraco (feedback: "sem graça").
       const idx = Math.min(Math.max(0, combo), PENTA.length - 1);
       const notes = PENTA.slice(0, idx + 1);
-      const step = 0.055;
+      let t = at;
       notes.forEach((n, i) => {
+        const nn = n * pitch;
         chime(ctx, out, {
-          freq: n * pitch, dur: 0.16, vol: b.vol * (0.8 + 0.05 * i),
-          at: at + i * step, partials: [1, 2, 3],
+          freq: nn, dur: 0.22, vol: b.vol * (0.8 + 0.09 * i),
+          at: t, partials: [1, 2, 3, 4],
         });
+        t += Math.max(0.04, 0.075 - i * 0.01); // acelera (75→40ms) — audível
       });
-      noise(ctx, out, { dur: 0.06, vol: b.vol * 0.15, at: at + notes.length * step, filterType: 'highpass', freq: 8000 });
+      // Shimmer de fechamento com decay suave (sparkle, não bloco denso).
+      // dur longo p/ o release completar antes do src.stop cortar.
+      noise(ctx, out, {
+        dur: 0.35, vol: b.vol * 0.18, at: t,
+        filterType: 'highpass', freq: 8000, release: 0.1,
+      });
       break;
     }
     case 'levelup': {
