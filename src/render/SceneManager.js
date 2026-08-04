@@ -148,16 +148,21 @@ function shade(hex, delta) {
   return `rgb(${clamp255(((n >> 16) & 255) + delta)},${clamp255(((n >> 8) & 255) + delta)},${clamp255((n & 255) + delta)})`;
 }
 
-// Warm stone palette — tan / gold / ochre / brown (Columns reference).
+// Warm stone palette — DESATURADA e ESCURA (v2, 2026-08-03, user:
+// "melhore o fundo de tijolos, não está tão legal no tema Columns").
+// ANTES: tan/ouro/ocre claros (~87 de brilho) competiam com as gems.
+// AGORA: marrons profundos/acinzentados (ardósia quente) — o board e as
+// gems são os heróis visuais (impeccable: fundo recua), vibe arcade
+// cabinet escuro do Columns clássico.
 const STONE_PALETTE = [
-  { base: '#D2A05E', light: '#EDC988', dark: '#A07038' }, // golden tan
-  { base: '#C08B4F', light: '#DFB57C', dark: '#91602B' }, // tan
-  { base: '#B57C3E', light: '#D5A264', dark: '#875323' }, // ochre
-  { base: '#A66B33', light: '#C79255', dark: '#7C4A1F' }, // brown
-  { base: '#C99B5C', light: '#E6C284', dark: '#9A6B34' }, // warm sand
+  { base: '#6E5D4C', light: '#7D6B58', dark: '#564836' }, // taupe quente
+  { base: '#635445', light: '#72614F', dark: '#4D4032' }, // marrom-acinzentado
+  { base: '#5C4E40', light: '#6A5B4A', dark: '#463B2F' }, // café profundo
+  { base: '#554839', light: '#635544', dark: '#40362A' }, // sombra quente
+  { base: '#6A5949', light: '#786650', dark: '#524535' }, // stone quente
 ];
 
-const MORTAR = '#382818'; // dark warm brown — recessed, never flat black
+const MORTAR = '#1B1510'; // argamassa quase preta quente — profundidade
 
 /** One stone: top-lit cartoon shading + hard bevel edges + grain speckles. */
 function drawBrick(ctx, rand, x, y, w, h) {
