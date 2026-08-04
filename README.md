@@ -53,10 +53,11 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 - **Ghost preview discreto** — formas reais da coluna em wireframe
   dashed branco ATRÁS das gems caindo (z -0.4), bem sutil, mostram
   onde a peça vai pousar sem competir com a peça ativa
-- **Perspectiva pinball** — board inclinado ~16° como numa máquina de
+- **Perspectiva pinball** — board inclinado ~11.5° como numa máquina de
   pinball (topo recua, base aproxima): `_tiltGroup` gira moldura, gems,
   ghost e beam JUNTOS (alinhamento preservado) + `TILT_LIFT` compensa o
-  enquadramento em janelas baixas
+  enquadramento; telas curtas (<820px de altura) aplicam zoom out leve
+  pra moldura não cortar na borda
 - **Iluminação cartoon** — key quente + fill suave, shading por faceta
   (sem vidro refrativo)
 - **Bloom seletivo** — gems brilham, HUD não

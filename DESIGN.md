@@ -88,11 +88,13 @@ Escala: score 48px+ (display), título 24px, corpo 14-16px, labels 11px uppercas
 - Superfície: plano sutil com grid lines (linhas 1px, opacity 0.08)
 - Célula selecionável: highlight suave (plane quadrado translúcido)
 - Coluna que cai: sombra projetada no fundo + preview fantasma da posição
-- **Perspectiva pinball (~16°)**: todos os elementos visuais do board
+- **Perspectiva pinball (~11.5°)**: todos os elementos visuais do board
   (moldura, gems, falling, ghost, beam, highlight) são filhos de um
   `_tiltGroup` rotacionado em X — girar tudo junto preserva o
-  alinhamento gems↔células. `TILT_LIFT` (desktop) compensa o crop da
-  base em viewports baixos.
+  alinhamento gems↔células. O offset vertical vive SÓ no tiltGroup
+  (`Y_OFFSET` das gems NÃO repete `BOARD_Y_OFFSET` — duplicar desloca as
+  gems ~1.3u pra baixo das células). `TILT_LIFT` (desktop) + zoom out em
+  viewports <820px mantêm a moldura visível.
 
 ### HUD (glass)
 
