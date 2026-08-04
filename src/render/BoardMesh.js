@@ -38,6 +38,16 @@ const { GAP, COLS, ROWS, VISIBLE_ROWS } = BOARD;
 // tightly" → folga visível). Ainda maior que 0.84×1.10=0.924 → lê "ativa".
 const FALLING_SCALE = 0.92;
 
+// Board tilt: negative tilts top, positive bottom (pinball machine style)
+const BOARD_TILT = -0.28; // radians, ~ -16°
+
+// TILT_LIFT: compensa o crop do tilt (a base do board desce na tela e
+// some no viewport em janelas baixas). Só desktop — o mobile já tem a
+// faixa inferior livre para os botões. Calculado no CONSTRUCTOR (o RENDER
+// é mutado pelo main.js p/ mobile; const de módulo seria hoisted c/ valor
+// antigo — mesmo bug do Y_OFFSET).
+let TILT_LIFT = 0;
+
 // Grid → world mapping. Logic y=0 is the TOP (spawn zone, off-screen);
 // 3D y grows upward, so we flip and offset so the visible band
 // (bottom VISIBLE_ROWS rows) centers on the camera look-at height.
@@ -298,22 +308,31 @@ export class BoardMesh {
     this.scene = scene;
     this._gems = new Map(); // "x,y" → gem group
     this._vanishing = []; // groups shrinking out
+
+    // Grupo raiz do board: recebe o enquadramento vertical (BOARD_Y_OFFSET
+    // + TILT_LIFT) E o tilt pinball. TODOS os grupos visuais do board
+    // (moldura, gems, falling, ghost, beam, highlight) são filhos DELE —
+    // giram juntos e o alinhamento relativo é preservado.
+    TILT_LIFT = (RENDER.BOARD_Y_OFFSET || 0) < 0 ? 0.7 : 0;
+    this._tiltGroup = new THREE.Group();
+    this._tiltGroup.position.set(0, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, 0);
+    this._tiltGroup.rotation.x = BOARD_TILT; // pinball: topo recua, base aproxima
+    scene.add(this._tiltGroup);
+
     this._gemGroup = new THREE.Group();
-    scene.add(this._gemGroup);
+    this._tiltGroup.add(this._gemGroup);
 
     // Y_OFFSET calculado AQUI (constructor) — o main.js já mutou
     // RENDER.BOARD_Y_OFFSET (layout mobile). Como o módulo é avaliado
     // no import (antes da mutação), não pode ser constante de módulo.
-    Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0);
+    Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT;
 
     // --- board surface -------------------------------------------------
     const boardW = COLS * GAP;
     const boardH = VISIBLE_ROWS * GAP;
     this._boardGroup = new THREE.Group();
-    // Enquadramento vertical via BOARD_Y_OFFSET (boardGroup E gems usam o
-    // mesmo offset — alinhamento preservado). Board desce na tela para o
-    // HUD DOM ter espaço próprio no topo.
-    this._boardGroup.position.set(0, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), 0); // visible band center
+    // Offset vertical e tilt vivem no _tiltGroup (pai) — aqui só o conteúdo.
+    this._boardGroup.position.set(0, 0, 0); // visible band center
 
     // halo quente atrás do tabuleiro (backdrop glow âmbar/gold — arcade,
     // não neon violeta). Com a placa escura opaca na frente, vira um anel
@@ -374,8 +393,7 @@ export class BoardMesh {
     frame.position.z = -0.55;
     this._boardGroup.add(frame);
 
-    scene.add(this._boardGroup);
-
+    this._tiltGroup.add(this._boardGroup);
     // --- cell highlight (hover) — branco azulado suave, não cyan neon ---
     this._highlight = new THREE.Mesh(
       new THREE.PlaneGeometry(GAP * 0.98, GAP * 0.98),
@@ -389,7 +407,7 @@ export class BoardMesh {
     );
     this._highlight.position.z = -0.05;
     this._highlight.visible = false;
-    scene.add(this._highlight);
+    this._tiltGroup.add(this._highlight);
 
     // --- column highlight beam (coluna ativa) — violeta suave, não cyan ---
     const beamMat = new THREE.MeshBasicMaterial({
@@ -403,7 +421,7 @@ export class BoardMesh {
     this._beam = new THREE.Mesh(new THREE.PlaneGeometry(GAP * 0.95, boardH * 1.12), beamMat);
     this._beam.position.z = -0.45;
     this._beam.visible = false;
-    scene.add(this._beam);
+    this._tiltGroup.add(this._beam);
 
     // --- ghost landing preview ------------------------------------------
     // Ghost reflete as MESMAS formas das gems reais (hexagon/square/
@@ -423,7 +441,7 @@ export class BoardMesh {
       this._ghostEdges.push(edges);
       this._ghostGroup.add(edges);
     }
-    scene.add(this._ghostGroup);
+    this._tiltGroup.add(this._ghostGroup);
     // linha de pouso — marca a linha onde a coluna vai assentar
     this._ghostLine = new THREE.Mesh(
       new THREE.PlaneGeometry(GAP * 1.08, 0.05),
@@ -437,14 +455,14 @@ export class BoardMesh {
     );
     this._ghostLine.position.z = 0.0;
     this._ghostLine.visible = false;
-    scene.add(this._ghostLine);
+    this._tiltGroup.add(this._ghostLine);
     this._previewColors = null;
 
     // --- falling column --------------------------------------------------
     this._fallingGroup = new THREE.Group();
     this._fallingGroup.visible = false;
     this._fallingGems = [];
-    scene.add(this._fallingGroup);
+    this._tiltGroup.add(this._fallingGroup);
 
     // glow grande atrás da coluna (leitura à distância, fora do viewport)
     this._fallingGlow = new THREE.Sprite(
@@ -604,7 +622,7 @@ export class BoardMesh {
     this._beam.visible = Boolean(this._previewColors);
     if (this._beam.visible) {
       const p = cellToWorld(x, VISIBLE_MID);
-      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), -0.45);
+      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, -0.45);
     }
   }
 
@@ -642,7 +660,7 @@ export class BoardMesh {
     this._fallingGroup.visible = true;
     // beam centralizado na coluna ativa
     this._beam.visible = true;
-    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0), -0.45);
+    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, -0.45);
   }
 
   /** Rotate the falling column (radians) — eased in update(). */
