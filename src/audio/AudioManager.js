@@ -1,19 +1,18 @@
 // ============================================================
 // Match-3D.js — AudioManager
-// SFX 100% sintetizados com WebAudio (osciladores + envelopes),
-// sem arquivos externos. Parâmetros base vindos de config.js
-// (AUDIO.SFX) com micro-composições por nome para soar premium.
+// Gerencia o AudioContext (lazy, autoplay-policy) e o master chain
+// (volume → compressor → destination). A SÍNTESE vive em sfx.js
+// (funções puras, também usadas na renderização offline de QA) —
+// o som auditado nos WAVs É o som do jogo.
 //
 // Contrato (ARCHITECTURE.md):
-//   AudioManager.play(name) — move|rotate|land|match|combo|
-//                             levelup|gameover|select
+//   AudioManager.play(name, { pitch, combo, delay }) — move|rotate|
+//     softdrop|land|match|combo|levelup|gameover|select
 //   AudioManager.setVolume(v), AudioManager.destroy()
-//
-// AudioContext criado/resumido de forma LAZY no primeiro gesto
-// do usuário (política de autoplay dos browsers).
 // ============================================================
 
 import { AUDIO } from '../config.js';
+import { renderSfx } from './sfx.js';
 
 const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
 
@@ -41,8 +40,15 @@ export class AudioManager {
       }
       this._ctx = new Ctx();
       this._master = this._ctx.createGain();
+      const comp = this._ctx.createDynamicsCompressor();
+      comp.threshold.value = -14;
+      comp.knee.value = 18;
+      comp.ratio.value = 5;
+      comp.attack.value = 0.002;
+      comp.release.value = 0.18;
       this._master.gain.value = this._volume;
-      this._master.connect(this._ctx.destination);
+      this._master.connect(comp);
+      comp.connect(this._ctx.destination);
     }
     if (this._ctx.state === 'suspended') {
       this._ctx.resume().catch(() => {});
@@ -70,64 +76,27 @@ export class AudioManager {
   /* ---------------- API pública ---------------- */
 
   /**
-   * Toca um SFX sintetizado.
-   * @param {'move'|'rotate'|'land'|'match'|'combo'|'levelup'|'gameover'|'select'} name
+   * Toca um SFX sintetizado (receita em sfx.js).
+   * @param {'move'|'rotate'|'softdrop'|'land'|'match'|'combo'|'levelup'|'gameover'|'select'} name
    * @param {Object} [opts]
-   * @param {number} [opts.pitch=1] Multiplicador de frequência (ex.: combos crescentes).
+   * @param {number} [opts.pitch=1] Multiplicador de frequência (combos crescentes).
+   * @param {number} [opts.combo=0] Índice do combo (arpejo ganha notas).
    * @param {number} [opts.delay=0] Atraso em segundos.
    */
-  play(name, { pitch = 1, delay = 0 } = {}) {
+  play(name, { pitch = 1, combo = 0, delay = 0 } = {}) {
     const ctx = this._ensure();
-    if (!ctx) return;
-    const sfx = AUDIO.SFX[name];
-    if (!sfx) {
+    if (!ctx || !this._master) return;
+    const base = AUDIO.SFX[name];
+    if (!base) {
       console.warn(`[AudioManager] SFX desconhecido: "${name}"`);
       return;
     }
-    const at = ctx.currentTime + delay;
-    const f = (m) => Math.max(30, sfx.freq * pitch * m);
-    const v = sfx.vol;
-
-    switch (name) {
-      case 'move':
-        this._tone({ type: sfx.type, freq: f(1), dur: sfx.dur, vol: v, at });
-        break;
-      case 'rotate':
-        this._tone({ type: sfx.type, freq: f(1), dur: sfx.dur, vol: v, at });
-        this._tone({ type: 'sine', freq: f(2), dur: sfx.dur * 0.7, vol: v * 0.4, at });
-        break;
-      case 'land':
-        this._tone({ type: sfx.type, freq: f(1.15), glideTo: f(0.75), dur: sfx.dur, vol: v, at });
-        break;
-      case 'match':
-        this._tone({ type: sfx.type, freq: f(1), glideTo: f(1.7), dur: sfx.dur, vol: v, at });
-        this._tone({ type: 'sine', freq: f(2), dur: sfx.dur * 0.8, vol: v * 0.35, at: at + 0.03 });
-        break;
-      case 'combo':
-        this._tone({ type: sfx.type, freq: f(1), dur: sfx.dur * 0.5, vol: v, at });
-        this._tone({ type: sfx.type, freq: f(1.32), dur: sfx.dur * 0.6, vol: v, at: at + 0.07 });
-        break;
-      case 'levelup': {
-        const notes = [1, 1.25, 1.5];
-        for (let i = 0; i < notes.length; i++) {
-          this._tone({
-            type: 'triangle',
-            freq: f(notes[i]),
-            dur: 0.14,
-            vol: v * 0.9,
-            at: at + i * 0.08,
-          });
-        }
-        break;
-      }
-      case 'gameover':
-        this._tone({ type: sfx.type, freq: f(1), glideTo: f(0.45), dur: sfx.dur, vol: v, at });
-        this._tone({ type: 'sine', freq: f(1.5), glideTo: f(0.6), dur: sfx.dur * 0.8, vol: v * 0.5, at: at + 0.05 });
-        break;
-      default:
-        // 'select' e qualquer futuro SFX: blip simples com os parâmetros do config.
-        this._tone({ type: sfx.type, freq: f(1), dur: sfx.dur, vol: v, at });
-    }
+    renderSfx(ctx, this._master, name, {
+      pitch,
+      combo,
+      at: ctx.currentTime + delay,
+      base,
+    });
   }
 
   /**
@@ -138,36 +107,6 @@ export class AudioManager {
     if (this._ctx && this._master) {
       this._master.gain.setTargetAtTime(this._volume, this._ctx.currentTime, 0.02);
     }
-  }
-
-  /* ---------------- Síntese ---------------- */
-
-  /**
-   * Um tom: oscilador + envelope de ganho (attack exponencial curto,
-   * release exponencial). glideTo faz pitch slide (exp) até o fim.
-   */
-  _tone({ type = 'sine', freq = 440, dur = 0.1, vol = 0.2, at = 0, glideTo = null, attack = 0.004 }) {
-    const ctx = this._ctx;
-    if (!ctx || !this._master) return;
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = type;
-    osc.frequency.setValueAtTime(Math.max(1, freq), at);
-    if (glideTo !== null && glideTo > 0) {
-      osc.frequency.exponentialRampToValueAtTime(Math.max(1, glideTo), at + dur);
-    }
-
-    const peak = Math.min(1, Math.max(0, vol));
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), at + attack);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-
-    osc.connect(gain);
-    gain.connect(this._master);
-    osc.start(at);
-    osc.stop(at + dur + 0.02);
   }
 
   /* ---------------- Ciclo de vida ---------------- */

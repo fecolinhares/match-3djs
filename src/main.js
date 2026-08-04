@@ -103,7 +103,7 @@ function startGame() {
       onScore: (points, count, combo) => {
         audio.play('match');
         if (combo > 0) {
-          audio.play('combo', { pitch: 1 + (combo - 1) * 0.12 });
+          audio.play('combo', { pitch: 1 + (combo - 1) * 0.12, combo: combo + 1 });
           hud.showCombo(combo + 1);
         }
         const snap = game.snapshot();
@@ -219,7 +219,7 @@ input.on('rotate', () => {
 input.on('softDrop', () => {
   if (game) {
     game.softDrop(1 / 60);
-    audio.play('land');
+    audio.play('softdrop');
   }
 });
 input.on('hardDrop', () => {
@@ -275,7 +275,7 @@ touchControls.on('rotate', () => {
 touchControls.on('softDrop', () => {
   if (game) {
     game.softDrop(1 / 60);
-    audio.play('land');
+    audio.play('softdrop');
   }
 });
 touchControls.on('hardDrop', () => {

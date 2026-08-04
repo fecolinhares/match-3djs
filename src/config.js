@@ -98,14 +98,15 @@ export const INPUT = {
 export const AUDIO = {
   MASTER_VOLUME: 0.8,
   SFX: {
-    move:     { type: 'square', freq: 320,  dur: 0.04, vol: 0.15 },
-    rotate:   { type: 'square', freq: 420,  dur: 0.06, vol: 0.15 },
-    land:     { type: 'triangle', freq: 180, dur: 0.08, vol: 0.25 },
-    match:    { type: 'sine',   freq: 520,  dur: 0.12, vol: 0.3 },
-    combo:    { type: 'sine',   freq: 660,  dur: 0.18, vol: 0.35 },
-    levelup:  { type: 'sine',   freq: 880,  dur: 0.3,  vol: 0.4 },
-    gameover: { type: 'sawtooth', freq: 110, dur: 0.8, vol: 0.35 },
-    select:   { type: 'triangle', freq: 300, dur: 0.05, vol: 0.2 },
+    move:     { type: 'square',   freq: 340,  dur: 0.032, vol: 0.16 },
+    rotate:   { type: 'triangle', freq: 300,  dur: 0.075, vol: 0.2 },
+    softdrop: { type: 'square',   freq: 210,  dur: 0.035, vol: 0.13 },
+    land:     { type: 'sine',     freq: 160,  dur: 0.12,  vol: 0.34 },
+    match:    { type: 'sine',     freq: 523,  dur: 0.42,  vol: 0.32 },
+    combo:    { type: 'sine',     freq: 523,  dur: 0.16,  vol: 0.34 },
+    levelup:  { type: 'triangle', freq: 523,  dur: 0.2,   vol: 0.45 },
+    gameover: { type: 'triangle', freq: 330,  dur: 0.2,   vol: 0.42 },
+    select:   { type: 'sine',     freq: 640,  dur: 0.05,  vol: 0.22 },
   },
 };
 

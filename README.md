@@ -71,7 +71,10 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
 - **Layout mobile com espaço para os controles** — zoom out da câmera
   + board mais alto: os botões touch ficam numa faixa inferior livre,
   sem cobrir o tabuleiro (gap ~85-90px)
-- **Audio sintetizado** — WebAudio, zero arquivos externos
+- **Audio sintetizado** — WebAudio, zero arquivos externos. Sound design
+  temático: gems de cristal (chimes com harmônicos + shimmer), board de
+  pedra (thumps), UI cartoon (blips); combos/levelup em arpejos
+  ascendentes, gameover descendente; master chain com compressor
 - **Reduced motion** respeitado (`prefers-reduced-motion`)
 - **Controles** — mouse, teclado e touch (mobile-first)
 
@@ -115,7 +118,7 @@ src/
 ├── render/          — Three.js (SceneManager, Materials, Particles, GemMesh, BoardMesh, PostFX)
 ├── input/           — InputManager (teclado + mouse + touch)
 ├── ui/              — HUD + Menu (DOM overlay glass)
-└── audio/           — AudioManager (WebAudio SFX)
+└── audio/           — AudioManager + sfx.js (síntese WebAudio)
 ```
 
 ## 📐 Design System

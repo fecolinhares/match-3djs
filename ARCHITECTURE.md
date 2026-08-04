@@ -26,7 +26,8 @@ index.html → src/main.js (game loop)
              │   ├── HUD.js             — score, level, next preview
              │   └── Menu.js            — menu principal + game over
              └── src/audio/             — SOM (WebAudio)
-                 └── AudioManager.js    — SFX sintetizados
+                 ├── AudioManager.js    — contexto lazy + master chain (volume→compressor)
+                 └── sfx.js             — síntese pura por SFX (testável offline)
 ```
 
 ## Contratos entre módulos (IMPORTANTE — subagentes respeitam estes)
@@ -78,8 +79,16 @@ index.html → src/main.js (game loop)
   tintFacets (cores por faceta) funcione
 
 ### audio/
-- `AudioManager.play(name)` — nomes: `move`, `rotate`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
-- SFX sintetizados com WebAudio (osciladores + envelopes), sem arquivos externos
+- `AudioManager.play(name, { pitch, combo })` — nomes: `move`, `rotate`,
+  `softdrop`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
+- `sfx.js` (`renderSfx(ctx, out, name, opts)`) — receitas de síntese PURAS;
+  funcionam com qualquer `BaseAudioContext`, inclusive `OfflineAudioContext`
+  (renderização de QA gera os WAVs exatos do jogo). Temática: gems de
+  cristal (chimes com harmônicos 1x-4x + shimmer), board de pedra (thumps
+  de ruído lowpass com sweep), UI cartoon (blips curtos), combos/levelup
+  (arpejos ascendentes), gameover (frase descendente).
+- Master chain com `DynamicsCompressor` (threshold -14, ratio 5) — picos de
+  arpejos/chimes múltiplos não clipam. Volume mestre em `AUDIO.MASTER_VOLUME`.
 
 ## Fluxo do jogo (COLUMNS)
 
