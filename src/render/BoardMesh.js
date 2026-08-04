@@ -750,10 +750,10 @@ export class BoardMesh {
       this._fallingGlow.scale.setScalar(6.2 + 0.6 * amp);
     }
 
-    // column highlight beam pulse
+    // column highlight beam pulse (v2: mais discreto — audito mobile)
     if (this._beam.visible) {
       const pulse = 0.5 + 0.5 * Math.sin(time * 5);
-      this._beam.material.opacity = (reduced ? 0.3 : 0.22 + 0.18 * pulse);
+      this._beam.material.opacity = (reduced ? 0.15 : 0.1 + 0.12 * pulse); // ~0.10-0.22
     }
 
     // cell highlight pulse
@@ -761,19 +761,20 @@ export class BoardMesh {
       this._highlight.material.opacity = (reduced ? 0.3 : 0.3 + 0.15 * (0.5 + 0.5 * Math.sin(time * 5)));
     }
 
-    // ghost preview pulse (holograma SUTIL — v2: menos destaque, atrás)
+    // ghost preview pulse (holograma SUTIL — v3: legível no frame
+    // distante sem competir; audito por subagentes 8/10)
     if (this._ghostGroup.visible) {
       const p = 0.5 + 0.5 * Math.sin(time * 3.2);
       const s = 0.96 + (reduced ? 0 : 0.06 * p);
       for (const m of this._ghostGems) {
         m.scale.setScalar(s);
-        m.material.opacity = (reduced ? 0.06 : 0.06 + 0.04 * p); // ~0.06-0.10
+        m.material.opacity = (reduced ? 0.09 : 0.09 + 0.04 * p); // ~0.09-0.13
       }
       for (const e of this._ghostEdges) {
         e.scale.setScalar(0.9 * 1.06 * s);
-        e.material.opacity = (reduced ? 0.35 : 0.35 + 0.15 * p); // ~0.35-0.50
+        e.material.opacity = (reduced ? 0.4 : 0.4 + 0.12 * p); // ~0.40-0.52
       }
-      this._ghostLine.material.opacity = (reduced ? 0.15 : 0.15 + 0.1 * p); // ~0.15-0.25
+      this._ghostLine.material.opacity = (reduced ? 0.2 : 0.2 + 0.1 * p); // ~0.2-0.3
       this._ghostLine.scale.setScalar(1 + (reduced ? 0 : 0.08 * p));
     }
   }
