@@ -88,6 +88,11 @@ Escala: score 48px+ (display), título 24px, corpo 14-16px, labels 11px uppercas
 - Superfície: plano sutil com grid lines (linhas 1px, opacity 0.08)
 - Célula selecionável: highlight suave (plane quadrado translúcido)
 - Coluna que cai: sombra projetada no fundo + preview fantasma da posição
+- **Perspectiva pinball (~16°)**: todos os elementos visuais do board
+  (moldura, gems, falling, ghost, beam, highlight) são filhos de um
+  `_tiltGroup` rotacionado em X — girar tudo junto preserva o
+  alinhamento gems↔células. `TILT_LIFT` (desktop) compensa o crop da
+  base em viewports baixos.
 
 ### HUD (glass)
 

@@ -46,6 +46,9 @@ index.html → src/main.js (game loop)
 - `Particles.explode(position, colorIndex, count)` — partículas de gem
 - `Particles.sparkle(position, color)` — brilho pontual
 - `BoardMesh` sincroniza com `Board.getStateSnapshot()` — posições 3D por gem
+- `BoardMesh` monta um `_tiltGroup` (pai de moldura, gems, falling, ghost,
+  beam, highlight) com `rotation.x = BOARD_TILT` — perspectiva pinball sem
+  desalinhar conteúdo; `TILT_LIFT` compensa o enquadramento no desktop
 - `PostFX` aplica bloom seletivo + vignette
 
 ### input/
