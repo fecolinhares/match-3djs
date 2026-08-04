@@ -761,20 +761,20 @@ export class BoardMesh {
       this._highlight.material.opacity = (reduced ? 0.3 : 0.3 + 0.15 * (0.5 + 0.5 * Math.sin(time * 5)));
     }
 
-    // ghost preview pulse (strong hologram)
+    // ghost preview pulse (holograma SUTIL — v2: menos destaque, atrás)
     if (this._ghostGroup.visible) {
       const p = 0.5 + 0.5 * Math.sin(time * 3.2);
-      const s = 0.96 + (reduced ? 0 : 0.1 * p);
+      const s = 0.96 + (reduced ? 0 : 0.06 * p);
       for (const m of this._ghostGems) {
         m.scale.setScalar(s);
-        m.material.opacity = (reduced ? 0.45 : 0.4 + 0.25 * p);
+        m.material.opacity = (reduced ? 0.06 : 0.06 + 0.04 * p); // ~0.06-0.10
       }
       for (const e of this._ghostEdges) {
         e.scale.setScalar(0.9 * 1.06 * s);
-        e.material.opacity = (reduced ? 0.7 : 0.85 + 0.15 * p);
+        e.material.opacity = (reduced ? 0.35 : 0.35 + 0.15 * p); // ~0.35-0.50
       }
-      this._ghostLine.material.opacity = (reduced ? 0.4 : 0.4 + 0.3 * p);
-      this._ghostLine.scale.setScalar(1 + (reduced ? 0 : 0.12 * p));
+      this._ghostLine.material.opacity = (reduced ? 0.15 : 0.15 + 0.1 * p); // ~0.15-0.25
+      this._ghostLine.scale.setScalar(1 + (reduced ? 0 : 0.08 * p));
     }
   }
 
@@ -802,14 +802,17 @@ export class BoardMesh {
       const def = GEM_DEFS[this._previewColors[i]] ?? GEM_DEFS[GEM_DEFS.length - 1];
       const shape = def[4] || 'sphere';
       // geometria MESMA das gems reais (silhueta por cor) + material
-      // fantasma translúcido (cor clareada, opacity baixa)
+      // fantasma translúcido (cor clareada, opacity BAIXA). v2 (2026-08-03,
+      // user: "ghost ao fundo e com menos destaque"): opacity 0.15→0.08 e
+      // z −0.4 (ATRÁS das gems caindo, que ocupam até +0.3) — o ghost não
+      // briga com a peça ativa; fica como marca de pouso discreta.
       if (!m.material || m.material.userData.colorIndex !== this._previewColors[i] || m.material.userData.shape !== shape) {
         const base = new THREE.Color(def[1]);
         const light = base.clone().lerp(new THREE.Color('#FFFFFF'), 0.65);
         const ghostMat = new THREE.MeshBasicMaterial({
           color: light,
           transparent: true,
-          opacity: 0.15,  // corpo quase invisível — edges dashed dominam
+          opacity: 0.08,  // 0.15→0.08: quase invisível — edges discretos guiam
           depthWrite: false,
           blending: THREE.NormalBlending,
         });
@@ -838,7 +841,7 @@ export class BoardMesh {
         const dashed = new THREE.LineDashedMaterial({
           color: 0xffffff,
           transparent: true,
-          opacity: 0.9,
+          opacity: 0.45,  // 0.9→0.45: ghost secundário, não compete (user)
           depthWrite: false,
           dashSize: 0.16,
           gapSize: 0.12,
@@ -849,16 +852,17 @@ export class BoardMesh {
         this._ghostEdges[i].visible = true;
       }
       const p = cellToWorld(x, row0 - i); // base row0, gems sobem (i=0 base)
-      m.position.set(p.x, p.y, p.z + 0.02);
+      // z −0.4: ghost ATRÁS das gems caindo (corpo até +0.3) e do board
+      m.position.set(p.x, p.y, p.z - 0.4);
       m.scale.setScalar(0.9); // ghost um pouco menor que a gem real (leitura)
       if (this._ghostEdges[i]) {
         this._ghostEdges[i].position.copy(m.position);
         this._ghostEdges[i].scale.setScalar(0.9 * 1.06);
       }
     }
-    // linha de pouso na linha do ghost (base da coluna)
+    // linha de pouso na linha do ghost (base da coluna) — sutil, atrás
     const land = cellToWorld(x, row0);
-    this._ghostLine.position.set(land.x, land.y - GAP / 2 + 0.02, 0.0);
+    this._ghostLine.position.set(land.x, land.y - GAP / 2 + 0.02, -0.3);
     this._ghostLine.visible = true;
   }
 
