@@ -47,6 +47,12 @@ const IS_MOBILE =
 if (IS_MOBILE) {
   RENDER.CAMERA_POS[2] = RENDER.MOBILE_CAMERA_Z;
   RENDER.BOARD_Y_OFFSET = RENDER.MOBILE_BOARD_Y_OFFSET;
+} else if (window.innerHeight < 820) {
+  // Desktop curto (laptops 1366×768 / 1280×720): o tilt pinball projeta a
+  // base do board para baixo da tela (frame colado/cortado na borda).
+  // Zoom out leve mantém o board inteiro visível com margem — mesmo
+  // princípio do mobile, mais suave.
+  RENDER.CAMERA_POS[2] = 20.5;
 }
 
 // ------------------------------------------------------------

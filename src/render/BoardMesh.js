@@ -39,7 +39,7 @@ const { GAP, COLS, ROWS, VISIBLE_ROWS } = BOARD;
 const FALLING_SCALE = 0.92;
 
 // Board tilt: negative tilts top, positive bottom (pinball machine style)
-const BOARD_TILT = -0.28; // radians, ~ -16°
+const BOARD_TILT = -0.2; // radians, ~ -11.5°
 
 // TILT_LIFT: compensa o crop do tilt (a base do board desce na tela e
 // some no viewport em janelas baixas). Só desktop — o mobile já tem a
@@ -65,7 +65,11 @@ const X_OFFSET = -((COLS - 1) / 2) * GAP;
 let Y_OFFSET = 0; // setado no constructor (usa RENDER mutado)
 
 function cellToWorld(x, y) {
-  return new THREE.Vector3(X_OFFSET + x * GAP, -(y * GAP) + Y_OFFSET, 0);
+  // Última row: sobe levemente p/ a base da gem (com rim) não invadir a
+  // moldura inferior sob a perspectiva do tilt — vision: peças da
+  // extremidade inferior "mais baixas do que deveriam".
+  const floorLift = y === ROWS - 1 ? 0.35 : 0;
+  return new THREE.Vector3(X_OFFSET + x * GAP, -(y * GAP) + Y_OFFSET + floorLift, 0);
 }
 
 /** Canvas 2D rounded-rect path helper. */
@@ -313,7 +317,7 @@ export class BoardMesh {
     // + TILT_LIFT) E o tilt pinball. TODOS os grupos visuais do board
     // (moldura, gems, falling, ghost, beam, highlight) são filhos DELE —
     // giram juntos e o alinhamento relativo é preservado.
-    TILT_LIFT = (RENDER.BOARD_Y_OFFSET || 0) < 0 ? 0.7 : 0;
+    TILT_LIFT = (RENDER.BOARD_Y_OFFSET || 0) < 0 ? 0.55 : 0;
     this._tiltGroup = new THREE.Group();
     this._tiltGroup.position.set(0, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, 0);
     this._tiltGroup.rotation.x = BOARD_TILT; // pinball: topo recua, base aproxima
@@ -325,7 +329,11 @@ export class BoardMesh {
     // Y_OFFSET calculado AQUI (constructor) — o main.js já mutou
     // RENDER.BOARD_Y_OFFSET (layout mobile). Como o módulo é avaliado
     // no import (antes da mutação), não pode ser constante de módulo.
-    Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT;
+    // NOTA: NÃO inclui BOARD_Y_OFFSET/TILT_LIFT — o offset vertical vive
+    // no _tiltGroup.position.y (pai das gems); incluir aqui aplicaria o
+    // deslocamento DUPLO (gems ~1.35u abaixo das células — "peças da
+    // extremidade inferior mais baixas do que deveriam").
+    Y_OFFSET = VISIBLE_MID * GAP + RENDER.CAMERA_LOOKAT[1];
 
     // --- board surface -------------------------------------------------
     const boardW = COLS * GAP;
@@ -622,7 +630,7 @@ export class BoardMesh {
     this._beam.visible = Boolean(this._previewColors);
     if (this._beam.visible) {
       const p = cellToWorld(x, VISIBLE_MID);
-      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, -0.45);
+      this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1], -0.45);
     }
   }
 
@@ -660,7 +668,7 @@ export class BoardMesh {
     this._fallingGroup.visible = true;
     // beam centralizado na coluna ativa
     this._beam.visible = true;
-    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1] + (RENDER.BOARD_Y_OFFSET || 0) + TILT_LIFT, -0.45);
+    this._beam.position.set(p.x, RENDER.CAMERA_LOOKAT[1], -0.45);
   }
 
   /** Rotate the falling column (radians) — eased in update(). */
