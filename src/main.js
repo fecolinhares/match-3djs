@@ -118,6 +118,7 @@ function startGame() {
       },
       onGameOver: (info) => {
         audio.play('gameover');
+        audio.stopMusic();
         if (info.score > best) {
           best = info.score;
           localStorage.setItem('match3d-best', String(best));
@@ -127,7 +128,10 @@ function startGame() {
       },
       onStateChange: (s) => {
         if (s === 'paused') {
+          audio.pauseMusic();
           hud.show();
+        } else if (s === 'playing') {
+          audio.resumeMusic();
         }
       },
       onEvent: (ev) => handleGameEvent(ev),
@@ -144,6 +148,9 @@ function startGame() {
   boardMesh.sync(game.snapshot());
   updateHUD();
   audio.play('select');
+  // Trilha lo-fi: cada início de jogo embaralha a playlist e abre com
+  // uma faixa DIFERENTE; as seguintes entram em sequência ao acabar.
+  audio.startMusic();
 }
 
 function handleGameEvent(ev) {
@@ -239,8 +246,10 @@ input.on('hardDrop', () => {
 });
 input.on('pause', () => {
   if (game) {
-    game.togglePause();
+    // play('select') ANTES do togglePause: o _ensure() do play daria
+    // resume() no AudioContext que o pauseMusic acabou de suspender.
     audio.play('select');
+    game.togglePause();
   }
 });
 input.on('restart', () => {
@@ -364,6 +373,7 @@ function render(time) {
 // Debug helper: expõe o game globalmente para testes (Playwright) e QA.
 if (typeof window !== 'undefined') {
   window.__game = () => game;
+  window.__audio = () => audio;
 }
 
 // ------------------------------------------------------------

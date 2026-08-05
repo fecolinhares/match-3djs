@@ -13,6 +13,7 @@
 
 import { AUDIO } from '../config.js';
 import { renderSfx } from './sfx.js';
+import { MusicEngine } from './music.js';
 
 const GESTURE_EVENTS = ['pointerdown', 'keydown', 'touchstart'];
 
@@ -25,6 +26,8 @@ export class AudioManager {
     this._ctx = null;
     this._master = null;
     this._volume = Math.min(1, Math.max(0, volume));
+    this._music = null;
+    this._musicVolume = AUDIO.MUSIC.VOLUME;
     this._unlock = this.unlock.bind(this);
     this._attachUnlock();
   }
@@ -109,10 +112,67 @@ export class AudioManager {
     }
   }
 
+  /* ---------------- Música (lo-fi procedural) ---------------- */
+
+  /**
+   * Inicia a playlist lo-fi. Cada chamada EMBARALHA a playlist e
+   * garante uma faixa de abertura diferente da última — o requisito
+   * "cada início de jogo começa com uma música diferente". Ao acabar
+   * cada faixa, a próxima entra automaticamente (sequência).
+   */
+  startMusic() {
+    const ctx = this._ensure();
+    if (!ctx || !this._master) return;
+    if (!this._music) {
+      this._music = new MusicEngine({
+        ctx,
+        output: this._master,
+        volume: this._musicVolume,
+      });
+    }
+    this._music.start(() => {
+      // Faixa terminou → a próxima da playlist entra sozinha
+      // (o MusicEngine já agenda; callback é para telemetria).
+    });
+  }
+
+  /** Para a música (fade out rápido). */
+  stopMusic() {
+    if (this._music) {
+      this._music.stop();
+      this._music = null;
+    }
+  }
+
+  /** Suspende o contexto (pause do jogo). */
+  pauseMusic() {
+    if (this._music) this._music.pause();
+  }
+
+  /** Retoma o contexto. */
+  resumeMusic() {
+    if (this._music) this._music.resume();
+  }
+
+  /** Ajusta o volume da música (0-1), independente do mestre. */
+  setMusicVolume(v) {
+    this._musicVolume = Math.min(1, Math.max(0, v));
+    if (this._music) this._music.setVolume(this._musicVolume);
+  }
+
+  /** Nome da faixa atual (para HUD/telemetria). */
+  get currentTrack() {
+    return this._music ? this._music.currentTrack : null;
+  }
+
   /* ---------------- Ciclo de vida ---------------- */
 
   destroy() {
     this._detachUnlock();
+    if (this._music) {
+      this._music.stop();
+      this._music = null;
+    }
     if (this._ctx) {
       try {
         this._ctx.close();

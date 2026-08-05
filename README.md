@@ -76,6 +76,11 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
   temático: gems de cristal (chimes com harmônicos + shimmer), board de
   pedra (thumps), UI cartoon (blips); combos/levelup em arpejos
   ascendentes, gameover descendente; master chain com compressor
+- **Trilha lo-fi procedural** — playlist de 6 faixas geradas em tempo
+  real (pads com wobble, chimes de cristal, bass, bateria relaxada,
+  vinil crackle). Volume baixo (~7dB abaixo dos SFX); cada início de
+  jogo abre com uma faixa aleatória DIFERENTE; ao acabar, a próxima
+  entra em sequência (re-shuffle no fim da playlist)
 - **Reduced motion** respeitado (`prefers-reduced-motion`)
 - **Controles** — mouse, teclado e touch (mobile-first)
 

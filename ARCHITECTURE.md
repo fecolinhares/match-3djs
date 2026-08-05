@@ -27,7 +27,8 @@ index.html → src/main.js (game loop)
              │   └── Menu.js            — menu principal + game over
              └── src/audio/             — SOM (WebAudio)
                  ├── AudioManager.js    — contexto lazy + master chain (volume→compressor)
-                 └── sfx.js             — síntese pura por SFX (testável offline)
+                 ├── sfx.js             — síntese pura por SFX (testável offline)
+                 └── music.js           — MusicEngine: trilha lo-fi procedural (playlist)
 ```
 
 ## Contratos entre módulos (IMPORTANTE — subagentes respeitam estes)
@@ -86,6 +87,19 @@ index.html → src/main.js (game loop)
 - `AudioManager.play(name, { pitch, combo })` — nomes: `move`, `rotate`,
   `softdrop`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
 - `sfx.js` (`renderSfx(ctx, out, name, opts)`) — receitas de síntese PURAS;
+- `music.js` (`MusicEngine`) — trilha lo-fi procedural: playlist de 6
+  faixas (progressão de acordes, bpm, groove e timbre por faixa),
+  scheduler com lookahead (setInterval + `ctx.currentTime`), bateria +
+  bass + pads com LFO (wobble) + chimes de cristal + vinil crackle.
+  `start()` embaralha a playlist (a última tocada vai para o fim — cada
+  início de jogo abre com faixa DIFERENTE); ao acabar cada faixa
+  (`_finishTrack` → timeout 650ms), a próxima entra em sequência; no fim
+  da playlist, re-shuffle. `pause()`/`resume()` suspende/retoma o
+  AudioContext; `stop()` seta `_stopping` (impede re-início pelo
+  timeout). `renderOffline(ctx, out, trackName, seed, cycles)` renderiza
+  a faixa inteira em OfflineAudioContext (o MESMO código do jogo) — QA.
+  Integração: `startGame()` → `audio.startMusic()`; `onGameOver` →
+  `audio.stopMusic()`; pause → `pauseMusic()`.
   funcionam com qualquer `BaseAudioContext`, inclusive `OfflineAudioContext`
   (renderização de QA gera os WAVs exatos do jogo). Temática: gems de
   cristal (chimes com harmônicos 1x-4x + shimmer), board de pedra (thumps

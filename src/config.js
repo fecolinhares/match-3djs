@@ -97,6 +97,15 @@ export const INPUT = {
 
 export const AUDIO = {
   MASTER_VOLUME: 0.8,
+  // Trilha lo-fi procedural (music.js) — volume BAIXO, pouco abaixo
+  // dos SFX (master 0.8): os SFX têm ~-14/-16dB de pico e a música
+  // deve ficar ~6-8dB abaixo para nunca competir com os eventos.
+  MUSIC: {
+    VOLUME: 0.34,
+    FADE_IN: 1.2,
+    FADE_OUT: 0.6,
+    SHUFFLE: true,
+  },
   SFX: {
     move:     { type: 'square',   freq: 340,  dur: 0.032, vol: 0.16 },
     rotate:   { type: 'triangle', freq: 300,  dur: 0.075, vol: 0.2 },
