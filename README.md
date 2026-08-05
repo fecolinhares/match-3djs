@@ -51,8 +51,9 @@ topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
   tijolos escuros desaturados (marrom-acinzentado) para o board e as
   gems serem o foco visual (v2: antiga paleta tan/ouro clara competia)
 - **Ghost preview discreto** — formas reais da coluna em wireframe
-  dashed branco ATRÁS das gems caindo (z -0.4), bem sutil, mostram
-  onde a peça vai pousar sem competir com a peça ativa
+  dashed branco ATRÁS das gems caindo (z -0.4), bem sutil (corpo
+  ~0.05-0.08, edges ~0.18-0.26), mostram onde a peça vai pousar sem
+  competir com a peça ativa
 - **Perspectiva pinball** — board inclinado ~11.5° como numa máquina de
   pinball (topo recua, base aproxima): `_tiltGroup` gira moldura, gems,
   ghost e beam JUNTOS (alinhamento preservado) + `TILT_LIFT` compensa o

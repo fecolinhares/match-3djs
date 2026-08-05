@@ -50,6 +50,10 @@ index.html → src/main.js (game loop)
 - `BoardMesh` monta um `_tiltGroup` (pai de moldura, gems, falling, ghost,
   beam, highlight) com `rotation.x = BOARD_TILT` — perspectiva pinball sem
   desalinhar conteúdo; `TILT_LIFT` compensa o enquadramento no desktop
+- `main.js` — contador `flashCount`/`matchResolving` coordena flashes de
+  matchs simultâneos/cascatas; o sync do render só roda com
+  `!matchResolving` (sincronizar durante o flash mataria a explosão e
+  travaria a gravidade — gems "no ar")
 - `PostFX` aplica bloom seletivo + vignette
 
 ### input/

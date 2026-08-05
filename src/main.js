@@ -229,8 +229,12 @@ input.on('hardDrop', () => {
     // Processa eventos do hard drop (land/fall/match) — landing juice,
     // trail e explosão de match SÓ disparam se passarmos por aqui.
     for (const ev of events) handleGameEvent(ev);
-    // re-sync após hard drop + possível match
-    boardMesh.sync(game.snapshot());
+    // Sincroniza APÓS o hard drop — MAS NÃO durante flash de match:
+    // o sync removeria as gems que estão flashando → flashComplete
+    // nunca rodaria → flashCount trava → matchResolving=true para
+    // sempre → o update loop nunca mais sincroniza → gems congeladas
+    // "no ar" (bug REAL reproduzido: hardDrop durante flash trava).
+    if (!matchResolving) boardMesh.sync(game.snapshot());
   }
 });
 input.on('pause', () => {
@@ -283,7 +287,11 @@ touchControls.on('hardDrop', () => {
     const events = game.hardDrop();
     audio.play('land');
     for (const ev of events) handleGameEvent(ev);
-    boardMesh.sync(game.snapshot());
+    // MESMO fix do teclado: sincronizar durante um flash de match
+    // removeria as gems flashando → flashComplete nunca roda →
+    // flashCount trava → matchResolving=true para sempre → gems
+    // congeladas "no ar" (bug reportado pelo user em múltiplas cores).
+    if (!matchResolving) boardMesh.sync(game.snapshot());
   }
 });
 

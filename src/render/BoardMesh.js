@@ -603,6 +603,20 @@ export class BoardMesh {
       if (g === gem) this._gems.delete(key);
     }
     const u = gem.userData;
+    // Se a gem estava em FLASH (match) e é removida antes de completar
+    // (ex.: sync pós-hardDrop a reciclou), completa o flash AGORA — o
+    // callback do flashMatch conta as gem removidas para zerar o
+    // flashCount. Sem isso flashCount trava → matchResolving=true para
+    // sempre → o update loop nunca sincroniza → gems congeladas no ar.
+    // (BUG REAL reproduzido: hardDrop durante flash → sync removia as
+    // gems flashando → flashComplete órfão → travamento permanente.)
+    // u.flashComplete é limpo ANTES de chamar — sem reentrância: o
+    // callback do flashMatch chama _removeGem de novo.
+    if (u.flashComplete) {
+      const done = u.flashComplete;
+      u.flashComplete = null;
+      done();
+    }
     u.vanishing = true;
     u.vanishT = 0;
     this._vanishing.push(gem);
@@ -787,20 +801,22 @@ export class BoardMesh {
       this._highlight.material.opacity = (reduced ? 0.3 : 0.3 + 0.15 * (0.5 + 0.5 * Math.sin(time * 5)));
     }
 
-    // ghost preview pulse (holograma SUTIL — v3: legível no frame
-    // distante sem competir; audito por subagentes 8/10)
+    // ghost preview pulse (holograma SUTIL — v4: mais transparente ainda;
+    // user: "placeholder quase opaco, deveria ser mais suave"). Corpo
+    // 0.05-0.08, edges 0.18-0.26, linha 0.12-0.18 — marca de pouso
+    // discreta, nunca compete com a peça ativa.
     if (this._ghostGroup.visible) {
       const p = 0.5 + 0.5 * Math.sin(time * 3.2);
       const s = 0.96 + (reduced ? 0 : 0.06 * p);
       for (const m of this._ghostGems) {
         m.scale.setScalar(s);
-        m.material.opacity = (reduced ? 0.09 : 0.09 + 0.04 * p); // ~0.09-0.13
+        m.material.opacity = (reduced ? 0.05 : 0.05 + 0.03 * p); // ~0.05-0.08
       }
       for (const e of this._ghostEdges) {
         e.scale.setScalar(0.9 * 1.06 * s);
-        e.material.opacity = (reduced ? 0.4 : 0.4 + 0.12 * p); // ~0.40-0.52
+        e.material.opacity = (reduced ? 0.18 : 0.18 + 0.08 * p); // ~0.18-0.26
       }
-      this._ghostLine.material.opacity = (reduced ? 0.2 : 0.2 + 0.1 * p); // ~0.2-0.3
+      this._ghostLine.material.opacity = (reduced ? 0.12 : 0.12 + 0.06 * p); // ~0.12-0.18
       this._ghostLine.scale.setScalar(1 + (reduced ? 0 : 0.08 * p));
     }
   }
@@ -839,7 +855,7 @@ export class BoardMesh {
         const ghostMat = new THREE.MeshBasicMaterial({
           color: light,
           transparent: true,
-          opacity: 0.08,  // 0.15→0.08: quase invisível — edges discretos guiam
+          opacity: 0.06,  // 0.08→0.06: placeholder ainda mais discreto (user)
           depthWrite: false,
           blending: THREE.NormalBlending,
         });
@@ -868,10 +884,10 @@ export class BoardMesh {
         const dashed = new THREE.LineDashedMaterial({
           color: 0xffffff,
           transparent: true,
-          opacity: 0.45,  // 0.9→0.45: ghost secundário, não compete (user)
+          opacity: 0.22,  // 0.45→0.22: wireframe bem mais suave (user: quase opaco)
           depthWrite: false,
           dashSize: 0.16,
-          gapSize: 0.12,
+          gapSize: 0.14,
         });
         this._ghostEdges[i].material = dashed;
         this._ghostEdges[i].userData.shape = shape;
