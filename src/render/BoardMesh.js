@@ -66,9 +66,12 @@ let Y_OFFSET = 0; // setado no constructor (usa RENDER mutado)
 
 function cellToWorld(x, y) {
   // Última row: sobe levemente p/ a base da gem (com rim) não invadir a
-  // moldura inferior sob a perspectiva do tilt — vision: peças da
-  // extremidade inferior "mais baixas do que deveriam".
-  const floorLift = y === ROWS - 1 ? 0.35 : 0;
+  // moldura inferior sob a perspectiva do tilt. FIX (2026-08-04, user:
+  // "as duas últimas linhas se sobrepõem"): 0.35 → 0.15 — levantar a
+  // row 13 em 0.35 (35% da célula) fazia o topo das gems dela invadir a
+  // row 12 (~0.18u de sobreposição visível); 0.15 mantém a folga com a
+  // moldura inferior (~10px) sem colidir com a row de cima.
+  const floorLift = y === ROWS - 1 ? 0.15 : 0;
   return new THREE.Vector3(X_OFFSET + x * GAP, -(y * GAP) + Y_OFFSET + floorLift, 0);
 }
 

@@ -97,6 +97,9 @@ Escala: score 48px+ (display), título 24px, corpo 14-16px, labels 11px uppercas
   (`Y_OFFSET` das gems NÃO repete `BOARD_Y_OFFSET` — duplicar desloca as
   gems ~1.3u pra baixo das células). `TILT_LIFT` (desktop) + zoom out em
   viewports <820px mantêm a moldura visível.
+- **Espaçamento das rows de baixo**: `floorLift` da última row é 0.15u
+  (0.35u fazia o topo das gems da row 13 invadir a row 12 — sobreposição
+  visível; corrigido). A folga com a moldura inferior fica ~10px.
 
 ### HUD (glass)
 

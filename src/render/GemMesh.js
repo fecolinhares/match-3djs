@@ -223,11 +223,15 @@ export function buildBodyGeometry(shape) {
     }
     case 'emerald': {
       // Esmeralda step-cut: extrude retangular CHANFRADO (cantos cortados
-      // = facetas no girdle) + mesa menor em cima. Não é uma caixa lisa:
-      // os 8 cantos cortados criam as facetas diagonais do corte.
+      // = facetas diagonais no girdle) + mesa menor em cima. A REFERÊNCIA
+      // é um retângulo HORIZONTAL (largura:altura ≈ 1.4:1) com cantos
+      // chanfrados NÍTIDOS (octógono retangular) — nunca uma pílula.
+      // FIX (2026-08-04, user: "a pedra verde está estranha, vira cápsula"):
+      // chanfro 0.12→0.17 (cantos diagonais mais visíveis) e bevel fino
+      // (0.14/0.10→0.07/0.05) — o bevel grosso arredondava a silhueta.
       const w = 0.82;
       const h = 0.56;
-      const cut = 0.12; // chanfro dos cantos (facetas diagonais)
+      const cut = 0.17; // chanfro dos cantos (facetas diagonais) — nítido
       const rect = (ww, hh) => {
         const s = new THREE.Shape();
         s.moveTo(-ww / 2 + cut, -hh / 2);
@@ -244,8 +248,8 @@ export function buildBodyGeometry(shape) {
       const girdle = new THREE.ExtrudeGeometry(rect(w, h), {
         depth: 0.42,
         bevelEnabled: true,
-        bevelThickness: 0.14,
-        bevelSize: 0.1,
+        bevelThickness: 0.07,
+        bevelSize: 0.05,
         bevelSegments: 2,
         curveSegments: 4,
       });
@@ -253,8 +257,8 @@ export function buildBodyGeometry(shape) {
       const mesa = new THREE.ExtrudeGeometry(rect(w * 0.6, h * 0.55), {
         depth: 0.3,
         bevelEnabled: true,
-        bevelThickness: 0.1,
-        bevelSize: 0.08,
+        bevelThickness: 0.06,
+        bevelSize: 0.04,
         bevelSegments: 2,
         curveSegments: 4,
       });
