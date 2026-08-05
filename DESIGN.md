@@ -133,7 +133,27 @@ Escala: score 48px+ (display), título 24px, corpo 14-16px, labels 11px uppercas
 - **Menu transitions**: 0.3s fade+scale
 - Todas respeitam `prefers-reduced-motion` (desativa shake, reduz partículas)
 
-## 8. Anti-Patterns (BANIDO)
+## 8. Áudio
+
+**Sound design (SFX)** — 100% sintetizado em WebAudio, zero arquivos:
+- Gems = cristal vítreo (chimes com harmônicos 1x-4x + shimmer de ar);
+  board = pedra/madeira (thumps graves); UI = cartoon (blips)
+- Hierarquia: ticks (-14/-16dB) < eventos (-5/-9dB) < celebração
+  (-2.7/-4dB); master chain com DynamicsCompressor
+- Combos/levelup em arpejos pentatônicos ascendentes; gameover
+  descendente suave
+
+**Trilha de fundo (lo-fi procedural)** — `src/audio/music.js`:
+- 6 faixas lo-fi (pads com LFO wobble, chimes de cristal pentatônicos,
+  bass, bateria relaxada com swing, textura de vinil com crackles)
+- Volume BAIXO: `MUSIC.VOLUME 0.34` vs master 0.8 → ~7dB abaixo dos
+  SFX (a música ambienta, nunca compete com os eventos)
+- Cada início de jogo abre com faixa ALEATÓRIA diferente (shuffle; a
+  última tocada vai para o fim); ao acabar, a próxima entra em
+  sequência; re-shuffle no fim da playlist
+- Pausa/retoma com o jogo (AudioContext suspend/resume)
+
+## 9. Anti-Patterns (BANIDO)
 
 - ❌ Cubos de plástico brilhante (gems precisam parecer pedra real)
 - ❌ Cores rainbow saturadas sem deslocamento de matiz
