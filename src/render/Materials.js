@@ -188,10 +188,14 @@ export function createGemMaterial(colorIndex) {
   // Satura a cor base um pouco (multiply) — gems mais ricas/vivas, como Bejeweled.
   const base = new THREE.Color(def[1]);
   base.offsetHSL(0, 0.04, 0); // +4% saturação (defs já são cartoon-saturadas)
+  // Esmeralda (cor 2): emissive um pouco mais alto — a mesa step-cut
+  // (face mais clara) ganha contraste contra os degraus no tamanho real
+  // da peça (sugestão de auditoria visual; só afeta a verde).
+  const emi = colorIndex === 2 ? 0.34 : 0.28;
   return new THREE.MeshPhysicalMaterial({
     color: base,
     emissive: new THREE.Color(def[2]),
-    emissiveIntensity: 0.28, // glow interno presente; bloom threshold alto evita washout
+    emissiveIntensity: emi, // glow interno presente; bloom threshold alto evita washout
     roughness: 0.26, // polido — facetas pegam luz como pedra cortada
     metalness: 0.0,
     transmission: 0.0, // FLAT: sem vidro/refração — corpo opaco
