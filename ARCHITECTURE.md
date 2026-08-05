@@ -87,6 +87,11 @@ index.html → src/main.js (game loop)
 - `AudioManager.play(name, { pitch, combo })` — nomes: `move`, `rotate`,
   `softdrop`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
 - `sfx.js` (`renderSfx(ctx, out, name, opts)`) — receitas de síntese PURAS;
+  funcionam com qualquer `BaseAudioContext`, inclusive `OfflineAudioContext`
+  (renderização de QA gera os WAVs exatos do jogo). Temática: gems de
+  cristal (chimes com harmônicos 1x-4x + shimmer), board de pedra (thumps
+  de ruído lowpass com sweep), UI cartoon (blips curtos), combos/levelup
+  (arpejos ascendentes), gameover (frase descendente).
 - `music.js` (`MusicEngine`) — trilha lo-fi procedural: playlist de 6
   faixas (progressão de acordes, bpm, groove e timbre por faixa),
   scheduler com lookahead (setInterval + `ctx.currentTime`), bateria +
@@ -100,11 +105,20 @@ index.html → src/main.js (game loop)
   a faixa inteira em OfflineAudioContext (o MESMO código do jogo) — QA.
   Integração: `startGame()` → `audio.startMusic()`; `onGameOver` →
   `audio.stopMusic()`; pause → `pauseMusic()`.
-  funcionam com qualquer `BaseAudioContext`, inclusive `OfflineAudioContext`
-  (renderização de QA gera os WAVs exatos do jogo). Temática: gems de
-  cristal (chimes com harmônicos 1x-4x + shimmer), board de pedra (thumps
-  de ruído lowpass com sweep), UI cartoon (blips curtos), combos/levelup
-  (arpejos ascendentes), gameover (frase descendente).
+
+### Flash de match (race conditions — DOCUMENTADO)
+- `flashCount`/`matchResolving` (main.js) protegem o sync: durante um
+  flash o render NÃO sincroniza (o sync removeria as gems flashando →
+  `flashComplete` órfão → travamento). `_removeGem` completa flashes
+  pendentes (defensivo).
+- **Encadeamento de callbacks (BoardMesh.flashMatch)**: se uma gem JÁ
+  está flashando quando um 2º match (cascata) a atinge, o `setFlash`
+  sobrescrevia o `flashComplete` do 1º match → remaining dele nunca
+  zerava → `flashCount` travava → gems congeladas no ar (bug REAL:
+  combo de 2 combinações com gems compartilhadas). Agora os callbacks
+  são ENCADEADOS: o flash completo chama o 1º e o 2º callback.
+- `_removeGem` com guard anti-duplicação (`!u.vanishing`) — o callback
+  encadeado chama `_removeGem` 2x para a mesma gem.
 - Master chain com `DynamicsCompressor` (threshold -14, ratio 5) — picos de
   arpejos/chimes múltiplos não clipam. Volume mestre em `AUDIO.MASTER_VOLUME`.
 

@@ -620,9 +620,13 @@ export class BoardMesh {
       u.flashComplete = null;
       done();
     }
-    u.vanishing = true;
-    u.vanishT = 0;
-    this._vanishing.push(gem);
+    // Proteção anti-duplicação: o callback encadeado (2 matches numa
+    // mesma gem) chama _removeGem de novo — não reiniciar o vanish.
+    if (!u.vanishing) {
+      u.vanishing = true;
+      u.vanishT = 0;
+      this._vanishing.push(gem);
+    }
   }
 
   // ------------------------------------------------------------
@@ -740,13 +744,30 @@ export class BoardMesh {
     }
     let remaining = gems.length;
     for (const gem of gems) {
-      GemMesh.setFlash(gem, () => {
+      const cb = () => {
         const u = gem.userData;
         Particles.explode(new THREE.Vector3(u.base.x, u.base.y, 0), u.colorIndex);
         this._removeGem(gem);
         remaining -= 1;
         if (remaining <= 0 && onComplete) onComplete();
-      });
+      };
+      const u = gem.userData;
+      if (u.flashT >= 0 && u.flashComplete) {
+        // JÁ está flashando (match de um cascade ANTERIOR neste mesmo
+        // flash) — NÃO sobrescrever: o setFlash mataria o callback do
+        // 1º match e o remaining dele nunca zeraria → flashCount trava
+        // → matchResolving=true para sempre → gems congeladas no ar
+        // (bug REAL: combo de 2+ combinações com gems compartilhadas).
+        // Encadeia: o flash atual, ao completar, chama AMBOS os
+        // callbacks (o 1º e o 2º match contam a gem).
+        const prev = u.flashComplete;
+        u.flashComplete = () => {
+          prev();
+          cb();
+        };
+      } else {
+        GemMesh.setFlash(gem, cb);
+      }
     }
   }
 
