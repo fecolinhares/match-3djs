@@ -27,10 +27,10 @@ gems falls from the top; move it, rotate the gems, and drop it to align and matc
 
 | Action | Keyboard | Mouse | Touch (mobile) |
 |--------|----------|-------|----------------|
-| Move column | `←` / `→` or `A` / `D` | Click the column | `◀ ESQ` / `▶ DIR` buttons (left/right) |
-| Rotate gems | `↑` or `W` | Click the board | `⟳ GIRAR` button (rotate) |
-| Soft drop | `↓` or `S` | — | `▼ ABAIXA` button (down) |
-| Hard drop | `Space` | — | `⤓ SOLTA` button (drop) |
+| Move column | `←` / `→` or `A` / `D` | Click the column | `◀ LEFT` / `▶ RIGHT` buttons |
+| Rotate gems | `↑` or `W` | Click the board | `⟳ ROTATE` button |
+| Soft drop | `↓` or `S` | — | `▼ DOWN` button |
+| Hard drop | `Space` | — | `⤓ DROP` button |
 | Pause | `P` or `Esc` | — | — |
 | Restart | `R` | Play Again button | — |
 
