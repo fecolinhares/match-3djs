@@ -100,17 +100,17 @@ export class TouchControls {
     const moveRow = document.createElement('div');
     moveRow.className = 'm3d-touch-row m3d-touch-row--move';
 
-    const btnLeft = this._makeButton('◀', 'moveLeft', 'Mover esquerda', 'Esq');
-    const btnRight = this._makeButton('▶', 'moveRight', 'Mover direita', 'Dir');
+    const btnLeft = this._makeButton('◀', 'moveLeft', 'Move left', 'Left');
+    const btnRight = this._makeButton('▶', 'moveRight', 'Move right', 'Right');
     moveRow.append(btnLeft, btnRight);
 
-    // Fileira 2 — ações: ⟳ (rotacionar) ▼ (soft drop) ⤓ (hard drop)
+    // Row 2 — actions: ⟳ (rotate) ▼ (soft drop) ⤓ (hard drop)
     const actRow = document.createElement('div');
     actRow.className = 'm3d-touch-row m3d-touch-row--actions';
 
-    const btnRotate = this._makeButton('⟳', 'rotate', 'Rotacionar', 'Girar');
-    const btnSoft = this._makeButton('▼', 'softDrop', 'Queda rápida', 'Abaixa');
-    const btnHard = this._makeButton('⤓', 'hardDrop', 'Queda instantânea', 'Solta');
+    const btnRotate = this._makeButton('⟳', 'rotate', 'Rotate', 'Rotate');
+    const btnSoft = this._makeButton('▼', 'softDrop', 'Soft drop', 'Down');
+    const btnHard = this._makeButton('⤓', 'hardDrop', 'Hard drop', 'Drop');
     actRow.append(btnRotate, btnSoft, btnHard);
 
     root.append(moveRow, actRow);
