@@ -1,46 +1,49 @@
-# 🎨 Referência Visual — Gemas (imagem oficial do usuário)
+# 🎨 Visual Reference — Gems (official user image)
 
-> **Fonte:** `docs/reference/gems-reference.jpg` (1024×1024, enviada pelo usuário em 2026-08-03).
-> **Regra:** as gemas 3D do jogo devem parecer **exatamente iguais a esta imagem, porém em 3D**.
-> Esta spec é o contrato visual — qualquer mudança de cor/forma/brilho deve voltar a esta tabela.
+> **Source:** `docs/reference/gems-reference.jpg` (1024×1024, provided by the user on 2026-08-03).
+> **Rule:** the 3D in-game gems must look **exactly like this image, but in 3D**.
+> This spec is the visual contract — any color/shape/glow change must go back to this table.
 
-## As 6 jóias (grid 2×3)
+## The 6 jewels (2×3 grid)
 
-| Posição | Jóia | Silhueta | Facetas | Rim (outline) | Glow |
+| Position | Jewel | Silhouette | Facets | Rim (outline) | Glow |
 |---|---|---|---|---|---|
-| top-left | **Rubi** | hexagonal alta, vértices pontiagudos topo/base | faceta hexagonal central + triângulos/trapézios radiais | crimson → hot-pink (`#FF4D6D`-família) | vermelho profundo |
-| top-right | **Safira** | square cushion, cantos biselados | step-cut concêntrico + padrão estrelado central | azul gelo médio (`#59CDFF`-família) | royal-blue elétrico |
-| middle-left | **Esmeralda** | retângulo horizontal, cantos bem cortados | bands step-cut + face central larga + facetas diagonais nos cantos | verde esmeralda vivo (`#3EE88A`-família) | verde brilhante |
-| middle-right | **Topázio** | triangular/pêra, ápice pontiagudo NO TOPO, base larga curva | triângulos convergindo ao centro | dourado → laranja (`#FFC24D`-família) | dourado quente |
-| bottom-left | **Amatista** | brilliant-cut clássica, girdle largo, ponta EMBBAIXO | radiais + kites alongados, flashes de estrela | lavanda-violeta (`#CE93F0`-família) | roxo saturado |
-| bottom-right | **Âmbar** | quase circular/oval brilliant | muitas facetas radiais triangulares + face central | âmbar-laranja (`#FFB64D`-família) | laranja fogo |
+| top-left | **Ruby** | tall hexagon, sharp top/bottom vertices | central hexagonal facet + radial triangles/trapezoids | crimson → hot-pink (`#FF4D6D` family) | deep red |
+| top-right | **Sapphire** | square cushion, beveled corners | concentric step-cut + central star pattern | medium ice blue (`#59CDFF` family) | electric royal-blue |
+| middle-left | **Emerald** | horizontal rectangle, sharp corners | step-cut bands + wide central face + diagonal corner facets | vivid emerald green (`#3EE88A` family) | bright green |
+| middle-right | **Topaz** | triangular/pear, sharp apex at the TOP, wide curved base | triangles converging to the center | golden → orange (`#FFC24D` family) | warm gold |
+| bottom-left | **Amethyst** | classic brilliant cut, wide girdle, point at the BOTTOM | radials + elongated kites, star flashes | lavender-violet (`#CE93F0` family) | saturated purple |
+| bottom-right | **Amber** | almost circular/oval brilliant | many radial triangular facets + central face | amber-orange (`#FFB64D` family) | fire orange |
 
-## Mapeamento no jogo (`GEM_DEFS` em `src/config.js`)
+## In-game mapping (`GEM_DEFS` in `src/config.js`)
 
 ```
-índice  forma        cor (jogo)      cor da referência     rim (novo campo 6)
-0       hexagon      Fire Ruby       vermelho              #FF5A78
-1       pear         Solar Topaz     amarelo               #FFC24D
-2       emerald      Emerald         verde                 #3EE88A
-3       square       Aquamarine      azul                  #59CDFF
-4       brilliant    Amethyst        roxo                  #CE93F0
-5       sphere       **Amber** (era Frost Diamond)  laranja #FFB64D
+index  shape      game color      reference color  rim (new field 6)
+0      hexagon    Fire Ruby       red              #FF5A78
+1      pear       Solar Topaz     yellow           #FFC24D
+2      emerald    Emerald         green            #3EE88A
+3      square     Aquamarine      blue             #59CDFF
+4      brilliant  Amethyst        purple           #CE93F0
+5      sphere     **Amber** (was Frost Diamond)  orange  #FFB64D
 ```
 
-> ⚠️ **Mudança 2026-08-03:** a cor 5 era "Frost Diamond" (branco-cinza), que **não existe na referência**.
-> A referência mostra **âmbar/laranja** no bottom-right → trocada para **Amber** (`#FF8A1E`).
+> ⚠️ **Change 2026-08-03:** color 5 used to be "Frost Diamond" (white-gray),
+> which **doesn't exist in the reference**. The reference shows **amber/orange**
+> at bottom-right → replaced with **Amber** (`#FF8A1E`).
 
-## Leitura visual obrigatória (o que o vision deve confirmar)
+## Mandatory visual reading (what vision must confirm)
 
-1. Cada gema tem **rim colorido** (não outline preto cartoony) na cor da tabela.
-2. Cada gema tem **halo/glow colorido** visível ao redor (não discreto demais).
-3. **Facetas nítidas** com contraste forte (crown/girdle/pavilion legíveis).
-4. **Fire interno** (coração brilhante) visível no centro.
-5. Silhuetas exatas: hexagonal pontiaguda / cushion / retângulo chanfrado / triângulo apex-top / brilliant ponta-embaixo / esfera facetada.
+1. Each gem has a **colored rim** (not a black cartoon outline) in the table color.
+2. Each gem has a visible **colored halo/glow** around it (not too subtle).
+3. **Sharp facets** with strong contrast (legible crown/girdle/pavilion).
+4. **Internal fire** (bright heart) visible at the center.
+5. Exact silhouettes: pointed hexagon / cushion / beveled rectangle / apex-top
+   triangle / brilliant point-down / faceted sphere.
 
-## Como validar
+## How to validate
 
-- Isolated preview: servir `gem-preview.html` temporário (escala 2.4) + `vision_analyze` com
-  UMA pergunta curta por gema (prompts longos 400 intermitente no opencode-go).
-- In-game: injetar 1 gem por coluna na row 8 (ver skill `threejs-game-development`).
-- Board cheio: capturar 4 frames espaçados ~600ms (GPU stall → frames pretos falsos).
+- Isolated preview: serve a temporary `gem-preview.html` (scale 2.4) +
+  `vision_analyze` with ONE short question per gem (long prompts get flaky
+  400s on opencode-go).
+- In-game: inject 1 gem per column on row 8 (see `threejs-game-development` skill).
+- Full board: capture 4 frames ~600ms apart (GPU stall → false black frames).
