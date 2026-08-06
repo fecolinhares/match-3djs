@@ -1,34 +1,34 @@
-<!-- Template padrão para Pull Requests no Match-3D.js -->
+<!-- Standard template for Pull Requests in Match-3D.js -->
 
-## Descrição
+## Description
 
-<!-- O que esta PR faz? Resuma em 1-2 frases. -->
+<!-- What does this PR do? Summarize in 1-2 sentences. -->
 
-## Tipo de mudança
+## Type of change
 
 - [ ] 🐛 Bug fix
 - [ ] ✨ Feature
 - [ ] ♻️ Refactor
-- [ ] 📝 Documentação
+- [ ] 📝 Documentation
 - [ ] 🎨 Visual/UX
 - [ ] ⚙️ CI/Infra
 
-## Como testar
+## How to test
 
 1. `npm ci && npm run dev`
-2. <!-- passos de teste -->
+2. <!-- test steps -->
 
-## Screenshots (se aplicável)
+## Screenshots (if applicable)
 
-<!-- Adicione screenshots de antes/depois para mudanças visuais. -->
+<!-- Add before/after screenshots for visual changes. -->
 
 ## Checklist
 
-- [ ] Build passa (`npm run build`)
-- [ ] Sem secrets ou paths locais no código/docs
-- [ ] `prefers-reduced-motion` respeitado (se animação nova)
-- [ ] Design system seguido (ver `DESIGN.md`)
+- [ ] Build passes (`npm run build`)
+- [ ] No secrets or local paths in code/docs
+- [ ] `prefers-reduced-motion` respected (if new animation)
+- [ ] Design system followed (see `DESIGN.md`)
 
-## Issues relacionadas
+## Related issues
 
 <!-- Fixes #123 -->

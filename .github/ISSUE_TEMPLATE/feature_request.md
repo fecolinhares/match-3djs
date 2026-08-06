@@ -1,23 +1,23 @@
 ---
 name: "✨ Feature request"
-about: "Sugira uma ideia para o Match-3D.js"
+about: "Suggest an idea for Match-3D.js"
 title: "[Feature] "
 labels: ["enhancement"]
 assignees: []
 ---
 
-**Problema que resolve**
+**Problem it solves**
 
-Descreva o problema que esta feature resolve (ex: "não consigo ver a próxima coluna claramente").
+Describe the problem this feature solves (e.g. "I can't see the next column clearly").
 
-**Solução proposta**
+**Proposed solution**
 
-Descreva o que você gostaria que acontecesse, com detalhes.
+Describe what you would like to happen, in detail.
 
-**Alternativas consideradas**
+**Alternatives considered**
 
-Quais alternativas você pensou?
+What alternatives did you think of?
 
-**Contexto adicional**
+**Additional context**
 
-Screenshots, mockups, links ou qualquer informação útil.
+Screenshots, mockups, links or any useful information.

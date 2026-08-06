@@ -1,39 +1,39 @@
 ---
 name: "🐛 Bug report"
-about: "Reporte um problema para ajudar a melhorar o Match-3D.js"
+about: "Report a problem to help improve Match-3D.js"
 title: "[Bug] "
 labels: ["bug"]
 assignees: []
 ---
 
-**Descrição do bug**
+**Bug description**
 
-Uma descrição clara e objetiva do problema.
+A clear and concise description of the problem.
 
-**Como reproduzir**
+**Steps to reproduce**
 
-1. Vá para '...'
-2. Clique em '...'
-3. Observe o erro
+1. Go to '...'
+2. Click on '...'
+3. See the error
 
-**Comportamento esperado**
+**Expected behavior**
 
-O que deveria acontecer.
+What should happen.
 
-**Comportamento atual**
+**Actual behavior**
 
-O que aconteceu (cole a mensagem de erro do console, se houver).
+What happened (paste the console error message, if any).
 
 **Screenshots**
 
-Se possível, adicione screenshots (F12 → Console → screenshot do erro ajuda muito).
+If possible, add screenshots (F12 → Console → screenshot of the error helps a lot).
 
-**Ambiente**
+**Environment**
 
-- Navegador (ex: Chrome 120, Firefox 119):
-- SO (ex: Windows 11, Ubuntu 24.04):
-- Versão do jogo (URL do deploy ou hash do commit, se souber):
+- Browser (e.g. Chrome 120, Firefox 119):
+- OS (e.g. Windows 11, Ubuntu 24.04):
+- Game version (deploy URL or commit hash, if known):
 
-**Contexto adicional**
+**Additional context**
 
-Qualquer outra informação relevante.
+Any other relevant information.
