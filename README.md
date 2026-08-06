@@ -1,147 +1,149 @@
 # Match-3D.js
 
-> Um puzzle match-3 inspirado no clássico **COLUMNS** da Sega, elevado ao padrão
-> visual dos jogos atuais — gráficos **AAA** com Three.js, jogável com **mouse ou
-> teclado** (e touch no mobile).
+> A match-3 puzzle inspired by the classic Sega **COLUMNS**, elevated to the
+> visual standard of modern games — **AAA** graphics with Three.js, playable
+> with **mouse or keyboard** (and touch on mobile).
 
 <p align="center">
-  <a href="https://fecolinhares.github.io/match-3djs/"><img src="https://img.shields.io/badge/jogar%20agora-%2300D2FF?style=for-the-badge&logo=githubpages&logoColor=white" alt="Jogar agora"></a>
+  <a href="https://fecolinhares.github.io/match-3djs/"><img src="https://img.shields.io/badge/play%20now-%2300D2FF?style=for-the-badge&logo=githubpages&logoColor=white" alt="Play now"></a>
   <a href="https://github.com/fecolinhares/match-3djs/actions"><img src="https://github.com/fecolinhares/match-3djs/actions/workflows/deploy-pages.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/fecolinhares/match-3djs" alt="License"></a>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/gameplay-desktop.png" alt="Gameplay desktop" width="640" />
-  <img src="docs/screenshots/gameplay-mobile.png" alt="Gameplay mobile" width="200" />
+  <img src="docs/screenshots/gameplay-desktop.png" alt="Desktop gameplay" width="640" />
+  <img src="docs/screenshots/gameplay-mobile.png" alt="Mobile gameplay" width="200" />
 </p>
 
-## 🎮 Jogar online
+## 🎮 Play online
 
-**https://fecolinhares.github.io/match-3djs/** — ou rode localmente (ver [Rodando](#-rodando)).
+**https://fecolinhares.github.io/match-3djs/** — or run it locally (see [Running](#-running)).
 
-## 🎮 Como Jogar
+## 🎮 How to Play
 
-O objetivo é alinhar **3 ou mais gems da mesma cor** — na horizontal, vertical
-ou **diagonal** — para destruí-las e marcar pontos. Uma coluna de 3 gems cai do
-topo; mova-a, rotacione as gems, e solte para alinhar e combinar.
+The goal is to align **3 or more gems of the same color** — horizontally,
+vertically or **diagonally** — to destroy them and score points. A column of 3
+gems falls from the top; move it, rotate the gems, and drop it to align and match.
 
-| Ação | Teclado | Mouse | Touch (mobile) |
-|------|---------|-------|----------------|
-| Mover coluna | `←` / `→` ou `A` / `D` | Clique na coluna | Botões `◀ ESQ` / `▶ DIR` |
-| Rotacionar gems | `↑` ou `W` | Clique no tabuleiro | Botão `⟳ GIRAR` |
-| Queda rápida | `↓` ou `S` | — | Botão `▼ ABAIXA` |
-| Queda instantânea | `Espaço` | — | Botão `⤓ SOLTA` |
-| Pausar | `P` ou `Esc` | — | — |
-| Reiniciar | `R` | Botão Play Again | — |
+| Action | Keyboard | Mouse | Touch (mobile) |
+|--------|----------|-------|----------------|
+| Move column | `←` / `→` or `A` / `D` | Click the column | `◀ ESQ` / `▶ DIR` buttons (left/right) |
+| Rotate gems | `↑` or `W` | Click the board | `⟳ GIRAR` button (rotate) |
+| Soft drop | `↓` or `S` | — | `▼ ABAIXA` button (down) |
+| Hard drop | `Space` | — | `⤓ SOLTA` button (drop) |
+| Pause | `P` or `Esc` | — | — |
+| Restart | `R` | Play Again button | — |
 
-> **Isolamento de input**: no desktop, apenas teclado + mouse funcionam
-> (os botões touch nem existem); no mobile, **apenas os botões touch**
-> controlam o jogo — cliques/taps/swipes no tabuleiro são ignorados e o
-> teclado físico é desativado. Os modos nunca se misturam.
+> **Input isolation**: on desktop, only keyboard + mouse work (the touch
+> buttons don't even exist); on mobile, **only the touch buttons** control the
+> game — clicks/taps/swipes on the board are ignored and the physical keyboard
+> is disabled. The modes never mix.
 
 ## ✨ Features
 
-- **6 jóias em silhuetas únicas** — rubi hexagonal, safira square-cut,
-  esmeralda step-cut, topázio pêra, amatista brilliant e esfera facetada,
-  cada cor com sua forma (acessibilidade visual)
-- **Rim colorido + halo** — reprodução fiel da [referência do usuário](docs/reference/GEMS-REFERENCE.md):
-  cada jóia tem anel de luz na cor do contorno, glow colorido e facetas
-  de alto contraste (v3 — substituiu o outline preto cartoon)
-- **Fundo de pedra/tijolo** — parede de arcade cabinet em canvas,
-  tijolos escuros desaturados (marrom-acinzentado) para o board e as
-  gems serem o foco visual (v2: antiga paleta tan/ouro clara competia)
-- **Ghost preview discreto** — formas reais da coluna em wireframe
-  dashed branco ATRÁS das gems caindo (z -0.4), bem sutil (corpo
-  ~0.05-0.08, edges ~0.18-0.26), mostram onde a peça vai pousar sem
-  competir com a peça ativa
-- **Perspectiva pinball** — board inclinado ~11.5° como numa máquina de
-  pinball (topo recua, base aproxima): `_tiltGroup` gira moldura, gems,
-  ghost e beam JUNTOS (alinhamento preservado) + `TILT_LIFT` compensa o
-  enquadramento; telas curtas (<820px de altura) aplicam zoom out leve
-  pra moldura não cortar na borda
-- **Iluminação cartoon** — key quente + fill suave, shading por faceta
-  (sem vidro refrativo)
-- **Bloom seletivo** — gems brilham, HUD não
-- **Partículas explosivas** — fragmentos, sparkles, ring shockwave
-- **Combo legível** — as peças do match brilham forte (0.55s), explodem
-  e somem — sem screen shake (v3)
-- **Cascatas + combos** — multiplicadores de pontuação
-- **Wild Star** — gem especial rara com bônus
-- **HUD arcade compacto** — Score/Next/Level juntos no topo, bordas
-  douradas, sombras duras cartoon
-- **Layout mobile com espaço para os controles** — zoom out da câmera
-  + board mais alto: os botões touch ficam numa faixa inferior livre,
-  sem cobrir o tabuleiro (gap ~85-90px)
-- **Audio sintetizado** — WebAudio, zero arquivos externos. Sound design
-  temático: gems de cristal (chimes com harmônicos + shimmer), board de
-  pedra (thumps), UI cartoon (blips); combos/levelup em arpejos
-  ascendentes, gameover descendente; master chain com compressor
-- **Trilha lo-fi procedural** — playlist de 6 faixas geradas em tempo
-  real (pads com wobble, chimes de cristal, bass, bateria relaxada,
-  vinil crackle). Volume baixo (~7dB abaixo dos SFX); cada início de
-  jogo abre com uma faixa aleatória DIFERENTE; ao acabar, a próxima
-  entra em sequência (re-shuffle no fim da playlist)
-- **Reduced motion** respeitado (`prefers-reduced-motion`)
-- **Controles** — mouse, teclado e touch (mobile-first)
+- **6 jewels with unique silhouettes** — hexagonal ruby, square-cut sapphire,
+  step-cut emerald, pear topaz, brilliant amethyst and faceted sphere, each
+  color with its own shape (visual accessibility)
+- **Colored rim + halo** — faithful reproduction of the
+  [user reference](docs/reference/GEMS-REFERENCE.md): each jewel has a light
+  ring in its outline color, colored glow and high-contrast facets
+  (v3 — replaced the black cartoon outline)
+- **Stone/brick background** — arcade cabinet wall drawn on canvas,
+  desaturated dark bricks (grayish-brown) so the board and the gems stay the
+  visual focus (v2: the old light tan/gold palette competed)
+- **Discreet ghost preview** — real column shapes in dashed white wireframe
+  BEHIND the falling gems (z -0.4), very subtle (body ~0.05-0.08, edges
+  ~0.18-0.26), showing where the piece will land without competing with the
+  active piece
+- **Pinball perspective** — board tilted ~11.5° like a pinball machine (top
+  recedes, base approaches): `_tiltGroup` rotates frame, gems, ghost and beam
+  TOGETHER (alignment preserved) + `TILT_LIFT` compensates the framing; short
+  screens (<820px tall) apply a slight zoom out so the frame doesn't clip at
+  the edge
+- **Cartoon lighting** — warm key + soft fill, facet shading (no refractive
+  glass)
+- **Selective bloom** — gems glow, HUD doesn't
+- **Explosive particles** — fragments, sparkles, ring shockwave
+- **Readable combo** — matched pieces glow bright (0.55s), explode and vanish
+  — no screen shake (v3)
+- **Cascades + combos** — score multipliers
+- **Wild Star** — rare special gem with bonus
+- **Compact arcade HUD** — Score/Next/Level together at the top, gold borders,
+  hard cartoon shadows
+- **Mobile layout with room for controls** — camera zoom out + taller board:
+  touch buttons sit in a free bottom strip, without covering the board
+  (gap ~85-90px)
+- **Synthesized audio** — WebAudio, zero external files. Themed sound design:
+  crystal gems (chimes with harmonics + shimmer), stone board (thumps),
+  cartoon UI (blips); combos/level-up in ascending arpeggios, game over
+  descending; master chain with compressor
+- **Procedural lo-fi soundtrack** — 6-track playlist generated in real time
+  (wobble pads, crystal chimes, bass, relaxed drums, vinyl crackle). Low
+  volume (~7dB below SFX); each game start opens with a DIFFERENT random
+  track; when it ends, the next one plays in sequence (re-shuffle at the end
+  of the playlist)
+- **Reduced motion** respected (`prefers-reduced-motion`)
+- **Controls** — mouse, keyboard and touch (mobile-first)
 
 ## 🛠️ Tech
 
 - [Three.js](https://threejs.org/) (WebGL2, EffectComposer + bloom)
 - [Vite](https://vitejs.dev/) — build + dev server
-- JavaScript puro (ES modules) — zero frameworks de UI
+- Pure JavaScript (ES modules) — zero UI frameworks
 
-## 🚀 Rodando
+## 🚀 Running
 
 ```bash
 npm install
 npm run dev   # → http://localhost:3456
 ```
 
-Para build de produção:
+Production build:
 
 ```bash
-npm run build      # gera em dist/
-npm run preview    # serve o build localmente
+npm run build      # outputs to dist/
+npm run preview    # serves the build locally
 ```
 
 ## 🌐 Deploy (GitHub Pages)
 
-O projeto está pronto para GitHub Pages — o workflow
-[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) faz
-build + deploy automático no push para `main` (ou manual via Actions tab).
+The project is ready for GitHub Pages — the workflow
+[`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)
+builds and deploys automatically on push to `main` (or manually via the
+Actions tab).
 
-**Para ativar:** torne o repositório público (ou use um plano com Pages
-privado) → **Settings → Pages → Source: GitHub Actions**. O `vite.config.js`
-já usa `base: './'`, então os assets funcionam em qualquer subpath.
+**To activate:** make the repository public (or use a plan with private
+Pages) → **Settings → Pages → Source: GitHub Actions**. The `vite.config.js`
+already uses `base: './'`, so assets work on any subpath.
 
-## 📁 Estrutura
+## 📁 Structure
 
 ```
 src/
 ├── main.js          — bootstrap + game loop
-├── config.js        — constantes (board, gems, render, input, audio)
-├── game/            — lógica pura (Board, Gem, FallingColumn, MatchDetector, GameState)
+├── config.js        — constants (board, gems, render, input, audio)
+├── game/            — pure logic (Board, Gem, FallingColumn, MatchDetector, GameState)
 ├── render/          — Three.js (SceneManager, Materials, Particles, GemMesh, BoardMesh, PostFX)
-├── input/           — InputManager (teclado + mouse + touch)
-├── ui/              — HUD + Menu (DOM overlay glass)
-└── audio/           — AudioManager + sfx.js (síntese WebAudio)
+├── input/           — InputManager (keyboard + mouse + touch)
+├── ui/              — HUD + Menu (glass DOM overlay)
+└── audio/           — AudioManager + sfx.js (WebAudio synthesis)
 ```
 
 ## 📐 Design System
 
-Ver [DESIGN.md](DESIGN.md) — paleta de gems, tipografia, motion, iluminação e
-anti-patterns. Arquitetura em [ARCHITECTURE.md](ARCHITECTURE.md).
+See [DESIGN.md](DESIGN.md) — gem palette, typography, motion, lighting and
+anti-patterns. Architecture in [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## 🤝 Contribuindo
+## 🤝 Contributing
 
-Contribuições são bem-vindas! Veja [CONTRIBUTING.md](CONTRIBUTING.md) e o
-[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Bugs e features: abra uma
-[issue](https://github.com/fecolinhares/match-3djs/issues) com o template.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Bugs and features: open an
+[issue](https://github.com/fecolinhares/match-3djs/issues) with the template.
 
-- 🔐 Vulnerabilidades: reporte em privado via
+- 🔐 Vulnerabilities: report privately via
   [Security Advisories](https://github.com/fecolinhares/match-3djs/security/advisories/new)
-  — veja [SECURITY.md](SECURITY.md).
+  — see [SECURITY.md](SECURITY.md).
 
-## 📄 Licença
+## 📄 License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
