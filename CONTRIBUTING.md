@@ -1,66 +1,66 @@
 # Contributing to Match-3D.js
 
-Obrigado por querer contribuir! 🎮
+Thank you for wanting to contribute! 🎮
 
-## Como contribuir
+## How to contribute
 
 ### 1. Issues
 
-- Antes de abrir uma issue, procure se já existe uma similar.
-- Use os templates: **Bug report** (com passos de reprodução, ambiente e
-  screenshot se possível) ou **Feature request** (descreva o problema que
-  resolve e a solução proposta).
-- Issues de segurança: **NÃO** abra publicamente — use o
+- Before opening an issue, search for an existing similar one.
+- Use the templates: **Bug report** (with reproduction steps, environment and
+  screenshot if possible) or **Feature request** (describe the problem it
+  solves and the proposed solution).
+- Security issues: **DO NOT** open publicly — use the
   [Security Advisories](https://github.com/fecolinhares/match-3djs/security/advisories/new).
-  Veja [SECURITY.md](SECURITY.md).
+  See [SECURITY.md](SECURITY.md).
 
 ### 2. Pull Requests
 
-O fluxo é o padrão GitHub:
+Standard GitHub flow:
 
-1. **Fork** o repositório (se você não tem permissão de push direto).
-2. Crie uma branch a partir da `main` mais recente:
+1. **Fork** the repository (if you don't have direct push permission).
+2. Create a branch from the latest `main`:
    ```bash
    git fetch origin
-   git checkout -b feat/minha-mudanca origin/main
+   git checkout -b feat/my-change origin/main
    ```
-3. Faça commits **atômicos** — um commit por mudança lógica, com mensagem
-   clara (ex: `feat:`, `fix:`, `refactor:`, `docs:`).
-4. Rode os checks locais antes de abrir o PR:
+3. Make **atomic** commits — one commit per logical change, with a clear
+   message (e.g. `feat:`, `fix:`, `refactor:`, `docs:`).
+4. Run local checks before opening the PR:
    ```bash
    npm ci
    npm run build
    ```
-5. Abra o PR contra `main`. A branch é protegida:
-   - **1 review de aprovação** obrigatório
-   - **Status checks** obrigatórios (`Build & Deploy to GitHub Pages`)
-   - **Linear history** (sem merge commits — use squash ou rebase)
-   - **Force push bloqueado** na `main`
+5. Open the PR against `main`. The branch is protected:
+   - **1 approving review** required
+   - **Status checks** required (`Build & Deploy to GitHub Pages`)
+   - **Linear history** (no merge commits — use squash or rebase)
+   - **Force push blocked** on `main`
 
-### 3. Padrões do projeto
+### 3. Project standards
 
-- **Sem secrets** — nunca commite `.env`, tokens ou paths locais da sua
-  máquina (`/home/...`, `/tmp/...`, etc.). Variáveis de ambiente no código
-  devem usar `process.env.X` com fallback.
-- **Lógica pura** em `src/game/` — sem Three.js/DOM (testável em Node).
-- **Design system** — siga `DESIGN.md` (cores, motion, anti-patterns).
-- **Reduced motion** — qualquer animação nova deve respeitar
+- **No secrets** — never commit `.env`, tokens or local paths from your
+  machine (`/home/...`, `/tmp/...`, etc.). Environment variables in code
+  must use `process.env.X` with a fallback.
+- **Pure logic** in `src/game/` — no Three.js/DOM (testable in Node).
+- **Design system** — follow `DESIGN.md` (colors, motion, anti-patterns).
+- **Reduced motion** — any new animation must respect
   `prefers-reduced-motion`.
-- Idioma dos comentários/código: PT-BR ou EN — consistente no arquivo.
+- Code/comment language: PT-BR or EN — consistent within the file.
 
-### 4. Estrutura
+### 4. Structure
 
 ```
 src/
 ├── main.js          — bootstrap + game loop
-├── config.js        — constantes (board, gems, render, input, audio)
-├── game/            — lógica pura (Board, Gem, FallingColumn, MatchDetector, GameState)
+├── config.js        — constants (board, gems, render, input, audio)
+├── game/            — pure logic (Board, Gem, FallingColumn, MatchDetector, GameState)
 ├── render/          — Three.js (SceneManager, Materials, Particles, GemMesh, BoardMesh, PostFX)
-├── input/           — InputManager (teclado + mouse + touch)
-├── ui/              — HUD + Menu (DOM overlay glass)
+├── input/           — InputManager (keyboard + mouse + touch)
+├── ui/              — HUD + Menu (glass DOM overlay)
 └── audio/           — AudioManager (WebAudio SFX)
 ```
 
-## Dúvidas
+## Questions
 
-Abra uma issue com a tag `question` ou comente no PR. Obrigado! 🙏
+Open an issue with the `question` tag or comment on the PR. Thanks! 🙏
