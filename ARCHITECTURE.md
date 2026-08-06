@@ -1,143 +1,143 @@
-# Match-3D.js — Arquitetura
+# Match-3D.js — Architecture
 
-> Puzzle match-3 inspirado em COLUMNS, gráficos AAA, Three.js, jogável com mouse + teclado.
+> COLUMNS-inspired match-3 puzzle, AAA graphics, Three.js, playable with mouse + keyboard.
 
-## Visão geral
+## Overview
 
 ```
-index.html → src/main.js (game loop) 
-             ├── src/config.js          — constantes globais
-             ├── src/game/              — LÓGICA PURA (sem Three.js)
-             │   ├── Board.js           — grid + gravidade + matches
-             │   ├── Gem.js             — estado de uma peça (cor, posição)
-             │   ├── FallingColumn.js   — coluna de 3 caindo
-             │   ├── MatchDetector.js   — detecção 3+ em linha/col/diag
+index.html → src/main.js (game loop)
+             ├── src/config.js          — global constants
+             ├── src/game/              — PURE LOGIC (no Three.js)
+             │   ├── Board.js           — grid + gravity + matches
+             │   ├── Gem.js             — state of one piece (color, position)
+             │   ├── FallingColumn.js   — falling column of 3
+             │   ├── MatchDetector.js   — detects 3+ in row/col/diag
              │   └── GameState.js       — state machine (menu/playing/paused/over)
-             ├── src/render/            — RENDER 3D (Three.js)
-             │   ├── SceneManager.js    — cena, câmera, luzes, loop
-             │   ├── Materials.js       — materiais PBR das gems
-             │   ├── Particles.js       — explosões, sparkles, poeira
-             │   ├── GemMesh.js         — mesh visual de uma gem
-             │   ├── BoardMesh.js       — malha do tabuleiro + highlights
+             ├── src/render/            — 3D RENDER (Three.js)
+             │   ├── SceneManager.js    — scene, camera, lights, loop
+             │   ├── Materials.js       — PBR materials for gems
+             │   ├── Particles.js       — explosions, sparkles, dust
+             │   ├── GemMesh.js         — visual mesh of a gem
+             │   ├── BoardMesh.js       — board mesh + highlights
              │   └── PostFX.js          — bloom, vignette, tone mapping
-             ├── src/input/             — ENTRADA
-             │   └── InputManager.js    — teclado + mouse unificados
+             ├── src/input/             — INPUT
+             │   └── InputManager.js    — unified keyboard + mouse
              ├── src/ui/                — HUD (DOM overlay)
              │   ├── HUD.js             — score, level, next preview
-             │   └── Menu.js            — menu principal + game over
-             └── src/audio/             — SOM (WebAudio)
-                 ├── AudioManager.js    — contexto lazy + master chain (volume→compressor)
-                 ├── sfx.js             — síntese pura por SFX (testável offline)
-                 └── music.js           — MusicEngine: trilha lo-fi procedural (playlist)
+             │   ├── Menu.js            — main menu + game over
+             │   └── TouchControls.js   — mobile touch buttons
+             └── src/audio/             — SOUND (WebAudio)
+                 ├── AudioManager.js    — lazy context + master chain (volume→compressor)
+                 ├── sfx.js             — pure SFX synthesis (offline-testable)
+                 └── music.js           — MusicEngine: procedural lo-fi soundtrack (playlist)
 ```
 
-## Contratos entre módulos (IMPORTANTE — subagentes respeitam estes)
+## Module contracts (IMPORTANT — subagents must respect these)
 
-### game/ (lógica pura, sem Three.js)
-- `Board` expõe: `cols`, `rows`, `grid[y][x] = gemColor|null`, `spawnColumn()`, `moveColumn(dx)`, `rotateColumn()`, `dropColumn()`, `tickGravity()`, `findMatches()`, `clearMatches()`, `applyGravity()`, `isGameOver()`, `getStateSnapshot()`
-- Grid: **x = coluna (0-7), y = linha (0-11)**, y=0 é o topo
-- Coluna caindo: `falling = { x, gems: [colorA, colorB, colorC], y }` — y é a posição da gem inferior
-- Cores: inteiros 0-6 (ver config.js `GEM_COLORS`)
-- Match: 3+ da mesma cor em linha reta (horizontal, vertical, diagonal \ e /)
-- Eventos via callback: `onScore(points)`, `onCombo(n)`, `onLevelUp(n)`, `onGameOver()`
+### game/ (pure logic, no Three.js)
+- `Board` exposes: `cols`, `rows`, `grid[y][x] = gemColor|null`, `spawnColumn()`, `moveColumn(dx)`, `rotateColumn()`, `dropColumn()`, `tickGravity()`, `findMatches()`, `clearMatches()`, `applyGravity()`, `isGameOver()`, `getStateSnapshot()`
+- Grid: **x = column (0-7), y = row (0-11)**, y=0 is the top
+- Falling column: `falling = { x, gems: [colorA, colorB, colorC], y }` — y is the bottom gem position
+- Colors: integers 0-6 (see config.js `GEM_COLORS`)
+- Match: 3+ of the same color in a straight line (horizontal, vertical, diagonal \ and /)
+- Events via callback: `onScore(points)`, `onCombo(n)`, `onLevelUp(n)`, `onGameOver()`
 
 ### render/
-- `SceneManager.init(container)` → retorna `{ scene, camera, renderer }`
+- `SceneManager.init(container)` → returns `{ scene, camera, renderer }`
 - `Materials.createGemMaterial(colorIndex)` → THREE.MeshPhysicalMaterial
-- `GemMesh.create(colorIndex, position)` → Group com mesh + glow
-- `Particles.explode(position, colorIndex, count)` — partículas de gem
-- `Particles.sparkle(position, color)` — brilho pontual
-- `BoardMesh` sincroniza com `Board.getStateSnapshot()` — posições 3D por gem
-- `BoardMesh` monta um `_tiltGroup` (pai de moldura, gems, falling, ghost,
-  beam, highlight) com `rotation.x = BOARD_TILT` — perspectiva pinball sem
-  desalinhar conteúdo; `TILT_LIFT` compensa o enquadramento no desktop
-- `main.js` — contador `flashCount`/`matchResolving` coordena flashes de
-  matchs simultâneos/cascatas; o sync do render só roda com
-  `!matchResolving` (sincronizar durante o flash mataria a explosão e
-  travaria a gravidade — gems "no ar")
-- `PostFX` aplica bloom seletivo + vignette
+- `GemMesh.create(colorIndex, position)` → Group with mesh + glow
+- `Particles.explode(position, colorIndex, count)` — gem particles
+- `Particles.sparkle(position, color)` — point sparkle
+- `BoardMesh` syncs with `Board.getStateSnapshot()` — 3D positions per gem
+- `BoardMesh` builds a `_tiltGroup` (parent of frame, gems, falling, ghost,
+  beam, highlight) with `rotation.x = BOARD_TILT` — pinball perspective without
+  misaligning content; `TILT_LIFT` compensates framing on desktop
+- `main.js` — `flashCount`/`matchResolving` counters coordinate simultaneous/
+  cascade match flashes; render sync only runs with `!matchResolving`
+  (syncing during the flash would kill the explosion and freeze gravity —
+  gems "in the air")
+- `PostFX` applies selective bloom + vignette
 
 ### input/
-- `InputManager` emite eventos: `moveLeft`, `moveRight`, `rotate`, `softDrop`, `hardDrop`, `pause`
-- **Isolamento de modo (obrigatório)**: o modo é resolvido UMA vez
-  (`touch` se `pointer:coarse` ou `maxTouchPoints>0`, senão `keyboard`)
-  e passado para InputManager E TouchControls — os dois nunca ficam
-  ativos juntos:
-  - `keyboard` (desktop): keydown registrado; touch pointer ignorado
-  - `touch` (mobile): keydown NEM é registrado (teclado físico externo
-    não controla); os listeners de pointer NÃO são registrados — taps/
-    swipes no board são ignorados; botões do TouchControls são os únicos
-    controles
-- Teclado: ←/→ move, ↑ rotaciona, ↓ soft drop, Espaço hard drop, P pause
-- Mouse: clique na coluna move pra lá, clique no tabuleiro = rotacionar na coluna, hover mostra preview
+- `InputManager` emits events: `moveLeft`, `moveRight`, `rotate`, `softDrop`, `hardDrop`, `pause`
+- **Mode isolation (required)**: the mode is resolved ONCE (`touch` if
+  `pointer:coarse` or `maxTouchPoints>0`, otherwise `keyboard`) and passed to
+  BOTH InputManager and TouchControls — the two are never active together:
+  - `keyboard` (desktop): keydown registered; touch pointer ignored
+  - `touch` (mobile): keydown is NOT even registered (external physical
+    keyboard doesn't control); pointer listeners are NOT registered — taps/
+    swipes on the board are ignored; TouchControls buttons are the only
+    controls
+- Keyboard: ←/→ move, ↑ rotate, ↓ soft drop, Space hard drop, P pause
+- Mouse: click a column to move there, click the board = rotate in the column, hover shows preview
 
 ### ui/
 - `HUD.update(score, level, lines, combo)` — DOM
-- `HUD.setNextPreview(colors[3])` — mini coluna preview
-- `Menu.show('menu'|'gameover', { score, best })` — overlay glass
-- `TouchControls` (mobile): botões ◀ ▶ ⟳ ▼ ⤓ (ESQ/DIR/GIRAR/ABAIXA/SOLTA)
-  color-coded, visíveis SÓ em modo touch; em desktop não são nem criados
-- **Gems são jóias facetadas reais** (GemMesh): cada cor tem silhueta de
-  corte (crown + girdle + pavilion) via mergeGeometries:
-  hexagon (rubi) / square (safira) / emerald (esmeralda) / pear (topázio) /
-  brilliant (amatista) / sphere (âmbar); `toNonIndexed()` garante que o
-  tintFacets (cores por faceta) funcione
+- `HUD.setNextPreview(colors[3])` — mini column preview
+- `Menu.show('menu'|'gameover', { score, best })` — glass overlay
+- `TouchControls` (mobile): buttons ◀ ▶ ⟳ ▼ ⤓ (LEFT/RIGHT/ROTATE/DOWN/DROP)
+  color-coded, visible ONLY in touch mode; on desktop they are not even created
+- **Gems are real faceted jewels** (GemMesh): each color has a cut silhouette
+  (crown + girdle + pavilion) via mergeGeometries:
+  hexagon (ruby) / square (sapphire) / emerald (emerald) / pear (topaz) /
+  brilliant (amethyst) / sphere (amber); `toNonIndexed()` ensures
+  tintFacets (per-facet colors) works
 
 ### audio/
-- `AudioManager.play(name, { pitch, combo })` — nomes: `move`, `rotate`,
+- `AudioManager.play(name, { pitch, combo })` — names: `move`, `rotate`,
   `softdrop`, `land`, `match`, `combo`, `levelup`, `gameover`, `select`
-- `sfx.js` (`renderSfx(ctx, out, name, opts)`) — receitas de síntese PURAS;
-  funcionam com qualquer `BaseAudioContext`, inclusive `OfflineAudioContext`
-  (renderização de QA gera os WAVs exatos do jogo). Temática: gems de
-  cristal (chimes com harmônicos 1x-4x + shimmer), board de pedra (thumps
-  de ruído lowpass com sweep), UI cartoon (blips curtos), combos/levelup
-  (arpejos ascendentes), gameover (frase descendente).
-- `music.js` (`MusicEngine`) — trilha lo-fi procedural: playlist de 6
-  faixas (progressão de acordes, bpm, groove e timbre por faixa),
-  scheduler com lookahead (setInterval + `ctx.currentTime`), bateria +
-  bass + pads com LFO (wobble) + chimes de cristal + vinil crackle.
-  `start()` embaralha a playlist (a última tocada vai para o fim — cada
-  início de jogo abre com faixa DIFERENTE); ao acabar cada faixa
-  (`_finishTrack` → timeout 650ms), a próxima entra em sequência; no fim
-  da playlist, re-shuffle. `pause()`/`resume()` suspende/retoma o
-  AudioContext; `stop()` seta `_stopping` (impede re-início pelo
-  timeout). `renderOffline(ctx, out, trackName, seed, cycles)` renderiza
-  a faixa inteira em OfflineAudioContext (o MESMO código do jogo) — QA.
-  Integração: `startGame()` → `audio.startMusic()`; `onGameOver` →
-  `audio.stopMusic()`; pause → `pauseMusic()`.
+- `sfx.js` (`renderSfx(ctx, out, name, opts)`) — PURE synthesis recipes;
+  work with any `BaseAudioContext`, including `OfflineAudioContext`
+  (QA rendering produces the exact WAVs of the game). Theme: crystal gems
+  (chimes with 1x-4x harmonics + shimmer), stone board (lowpass noise
+  thumps with sweep), cartoon UI (short blips), combos/level-up (ascending
+  arpeggios), game over (descending phrase).
+- `music.js` (`MusicEngine`) — procedural lo-fi soundtrack: playlist of 6
+  tracks (chord progression, bpm, groove and timbre per track), lookahead
+  scheduler (setInterval + `ctx.currentTime`), drums + bass + pads with LFO
+  (wobble) + crystal chimes + vinyl crackle. `start()` shuffles the playlist
+  (the last played goes to the end — each game start opens with a DIFFERENT
+  track); when each track ends (`_finishTrack` → 650ms timeout), the next
+  plays in sequence; at the end of the playlist, re-shuffle.
+  `pause()`/`resume()` suspends/resumes the AudioContext; `stop()` sets
+  `_stopping` (prevents re-start via the timeout). `renderOffline(ctx, out,
+  trackName, seed, cycles)` renders the whole track in an
+  OfflineAudioContext (the SAME code as the game) — QA. Integration:
+  `startGame()` → `audio.startMusic()`; `onGameOver` → `audio.stopMusic()`;
+  pause → `pauseMusic()`.
 
-### Flash de match (race conditions — DOCUMENTADO)
-- `flashCount`/`matchResolving` (main.js) protegem o sync: durante um
-  flash o render NÃO sincroniza (o sync removeria as gems flashando →
-  `flashComplete` órfão → travamento). `_removeGem` completa flashes
-  pendentes (defensivo).
-- **Encadeamento de callbacks (BoardMesh.flashMatch)**: se uma gem JÁ
-  está flashando quando um 2º match (cascata) a atinge, o `setFlash`
-  sobrescrevia o `flashComplete` do 1º match → remaining dele nunca
-  zerava → `flashCount` travava → gems congeladas no ar (bug REAL:
-  combo de 2 combinações com gems compartilhadas). Agora os callbacks
-  são ENCADEADOS: o flash completo chama o 1º e o 2º callback.
-- `_removeGem` com guard anti-duplicação (`!u.vanishing`) — o callback
-  encadeado chama `_removeGem` 2x para a mesma gem.
-- Master chain com `DynamicsCompressor` (threshold -14, ratio 5) — picos de
-  arpejos/chimes múltiplos não clipam. Volume mestre em `AUDIO.MASTER_VOLUME`.
+### Match flash (race conditions — DOCUMENTED)
+- `flashCount`/`matchResolving` (main.js) protect the sync: during a flash
+  the render does NOT sync (the sync would remove the flashing gems → orphan
+  `flashComplete` → freeze). `_removeGem` completes pending flashes
+  (defensive).
+- **Callback chaining (BoardMesh.flashMatch)**: if a gem is ALREADY flashing
+  when a 2nd match (cascade) hits it, `setFlash` used to overwrite the 1st
+  match's `flashComplete` → its remaining never zeroed → `flashCount` froze →
+  gems frozen in the air (REAL bug: 2-match combo with shared gems). Now the
+  callbacks are CHAINED: the complete flash calls both the 1st and 2nd
+  callback.
+- `_removeGem` with anti-duplication guard (`!u.vanishing`) — the chained
+  callback calls `_removeGem` 2x for the same gem.
+- Master chain with `DynamicsCompressor` (threshold -14, ratio 5) — peaks of
+  multiple arpeggios/chimes don't clip. Master volume in `AUDIO.MASTER_VOLUME`.
 
-## Fluxo do jogo (COLUMNS)
+## Game flow (COLUMNS)
 
-1. `GameState` inicia em `menu`
-2. Start → `playing`, `Board.spawnColumn()` cria coluna de 3 no topo
-3. A cada tick: coluna desce 1 célula (velocidade aumenta com nível)
-4. Input: mover/rotacionar enquanto cai
-5. Land (coluna chega ao fundo/empilha) → `findMatches()`
-6. Se match: `clearMatches()` → `applyGravity()` → re-check (cascata) → combo++
-7. Sem match: `spawnColumn()` nova
-8. Game over: grid cheio sem espaço pra nova coluna
+1. `GameState` starts in `menu`
+2. Start → `playing`, `Board.spawnColumn()` creates a 3-gem column at the top
+3. Each tick: column drops 1 cell (speed increases with level)
+4. Input: move/rotate while falling
+5. Land (column reaches bottom/stacks) → `findMatches()`
+6. If match: `clearMatches()` → `applyGravity()` → re-check (cascade) → combo++
+7. No match: `spawnColumn()` new
+8. Game over: grid full with no room for a new column
 
-## Padrão AAA
+## AAA Standard
 
-- Tudo com easing exponencial (nada linear)
-- Gems com MeshPhysicalMaterial: transmission, iridescence, emissive glow
-- Bloom seletivo: gems + partículas brilham, HUD DOM não
-- Screen shake sutil em combos, partículas explosivas
-- `prefers-reduced-motion` respeitado
+- Everything with exponential easing (nothing linear)
+- Gems with MeshPhysicalMaterial: transmission, iridescence, emissive glow
+- Selective bloom: gems + particles glow, DOM HUD doesn't
+- Subtle screen shake on combos, explosive particles
+- `prefers-reduced-motion` respected
 - FPS: WebGL2, antialias, pixelRatio ≤ 2
